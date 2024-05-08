@@ -48,6 +48,7 @@ private:
     char psymb;
     int id;
     string position;
+    bool hasMoved = false;
 public:
     Piece(string name, Color color, char psymb, int id, string position) :
         name(name),
@@ -75,6 +76,14 @@ public:
 
     void setPosition(string position) {
         this->position = position;
+    }
+
+    bool getHasMoved() const {
+        return hasMoved;
+    }
+
+    void setHasMoved() {
+        this->hasMoved = true;
     }
 };
 
@@ -293,7 +302,7 @@ string Board::getInput(bool isWhitePlaying) {
     cout << "🕹️  Entrez votre coup: ";
     cout << orange;
     cin >> input;
-    cout << reset;
+    cout << reset << endl;
 
     return input;
 }
@@ -880,30 +889,16 @@ void Board::startGame() {
             return;
         } else {
             if (correctMovementPattern(input)) {
-
-                if (!validMove(input, isWhitePlaying)) {
+                if (!validMove(input, isWhitePlaying))
                     continue;
-                }
 
                 // move the piece
                 Square start(&input[0]);
                 Square end(&input[2]);
                 board[end.getLine()][end.getColumn()] = board[start.getLine()][start.getColumn()];
                 board[start.getLine()][start.getColumn()] = nullptr;
-
                 board[end.getLine()][end.getColumn()]->setPosition(end.toString());
-
-                // check if the other player is in check
-                if (checkCheck(!isWhitePlaying)) {
-                    cout << red << bold;
-                    cout << "👑 Ce mouvement met le roi " << (!isWhitePlaying ? "blanc" : "noir") << " en échec." << endl;
-                    cout << reset;
-                }
-
-                cout << "✅ Mouvement " << input << " effectué." << endl;
-                cout << reset;
-            
-                isWhitePlaying = !isWhitePlaying;
+                board[end.getLine()][end.getColumn()]->setHasMoved();
             } else if (correctKingsideCastlingPattern(input)) {
                 continue;
             } else if (correctQueensideCastlingPattern(input)) {
@@ -915,7 +910,20 @@ void Board::startGame() {
                 cout << orange << "/help" << red;
                 cout << " pour voir les coups valides)." << endl;
                 cout << reset;
+                continue;
             }
+
+            cout << "✅ Mouvement " << input << " effectué." << endl;
+            cout << reset;
+
+            // check if the other player is in check
+            if (checkCheck(!isWhitePlaying)) {
+                cout << red << bold;
+                cout << "👑 Ce mouvement met le roi " << (!isWhitePlaying ? "blanc" : "noir") << " en échec." << endl;
+                cout << reset;
+            }
+        
+            isWhitePlaying = !isWhitePlaying;
         }
     }
 
