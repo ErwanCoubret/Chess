@@ -770,16 +770,13 @@ bool Board::checkCheck(bool isWhitePlaying) {
         }
     }
 
-    cout << endl << (isWhitePlaying ? "White" : "Black") << " king position: " << kingPosition << endl;
-
     // check if the king is in check
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
             if (board[i][j] != nullptr && board[i][j]->getColor() != (isWhitePlaying ? Color::WHITE : Color::BLACK)) {
-                cout << "Piece: " << board[i][j]->getPsymb() << " at " << board[i][j]->getPosition() << (board[i][j]->getColor() == Color::WHITE ? " (white)" : " (black)") << endl;
-                // if (checkMove(board[i][j], Square(&board[i][j]->getPosition()[0]), Square(&kingPosition[0]))) {
-                //     return true;
-                // }
+                if (checkMove(board[i][j], Square(&board[i][j]->getPosition()[0]), Square(&kingPosition[0]))) {
+                    return true;
+                }
             }
         }
     }
@@ -825,6 +822,25 @@ bool Board::validMove(string input, bool isWhitePlaying) {
         cout << reset;
         return false;
     }
+
+    // check if the move doesn't put the king in check
+    // we save the current state of squares, try the move, check if the king is in check, and then revert the move
+    Piece* startPiece = board[start.getLine()][start.getColumn()];
+    Piece* endPiece = board[end.getLine()][end.getColumn()];
+    board[end.getLine()][end.getColumn()] = board[start.getLine()][start.getColumn()];
+    board[start.getLine()][start.getColumn()] = nullptr;
+
+    if (checkCheck(isWhitePlaying)) {
+        cout << red << bold;
+        cout << "🚫 Le roi " << (isWhitePlaying ? "blanc" : "noir") << " est en échec." << endl;
+        cout << reset;
+        board[start.getLine()][start.getColumn()] = startPiece;
+        board[end.getLine()][end.getColumn()] = endPiece;
+        return false;
+    }
+
+    board[start.getLine()][start.getColumn()] = startPiece;
+    board[end.getLine()][end.getColumn()] = endPiece;
     
     return true;
 }
@@ -880,16 +896,13 @@ void Board::startGame() {
                 // check if the other player is in check
                 if (checkCheck(!isWhitePlaying)) {
                     cout << red << bold;
-                    cout << "👑 Ce mouvement met le roi " << (isWhitePlaying ? "blanc" : "noir") << " en échec." << endl;
-                    cout << reset;
-                    board[7 - start.getLine()][start.getColumn()] = board[7 - end.getLine()][end.getColumn()];
-                    board[7 - end.getLine()][end.getColumn()] = nullptr;
-                    continue;
-                } else {
-                    cout << "✅ Mouvement " << input << " effectué." << endl;
+                    cout << "👑 Ce mouvement met le roi " << (!isWhitePlaying ? "blanc" : "noir") << " en échec." << endl;
                     cout << reset;
                 }
-                
+
+                cout << "✅ Mouvement " << input << " effectué." << endl;
+                cout << reset;
+            
                 isWhitePlaying = !isWhitePlaying;
             } else if (correctKingsideCastlingPattern(input)) {
                 continue;
