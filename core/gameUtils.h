@@ -136,6 +136,12 @@ bool correctQueensideCastlingPattern(string const & cmd) {
 class Board {
 private:
     vector< vector<Piece*> > board;
+    bool isWhitePlaying = true;
+    bool isPlaying = true;
+    bool isCheck = false;
+    bool isCheckmate = false;
+    bool whiteWin = false;
+    bool blackWin = false;
 public:
     Board() :
         board(8, vector<Piece*>(8))
@@ -256,6 +262,17 @@ string Board::canonical_position() const {
                 output += ",";
             }
     }
+
+    if (whiteWin) {
+        output += " 1-0";
+    } else if (blackWin) {
+        output += " 0-1";
+    } else if (!isPlaying) {
+        output += " 1/2-1/2";
+    } else {
+        output += " ?-?";
+    }
+
     return output;
 }
 
@@ -278,7 +295,7 @@ string Board::getInput(bool isWhitePlaying) {
 }
 
 bool Board::checkMove(Piece* piece, Square start, Square end) {
-    cout << piece->getPsymb() << start.getLine() << start.getColumn() << " to " << end.getLine() << end.getColumn();
+    // cout << piece->getPsymb() << start.getLine() << start.getColumn() << " to " << end.getLine() << end.getColumn();
     Piece* endPiece = board[7 - end.getLine()][end.getColumn()];
 
     // ----- WHITE PAWN LOGIC -----
@@ -783,12 +800,7 @@ bool Board::validMove(string input, bool isWhitePlaying) {
 void Board::startGame() {
     
     // ----- Game status -----
-    bool isWhitePlaying = true;
-    bool isPlaying = true;
-    bool isCheck = false;
-    bool isCheckmate = false;
-    bool whiteWin = false;
-    bool blackWin = false;
+    
 
     // printBegin();
 
@@ -799,7 +811,6 @@ void Board::startGame() {
 
         if (input == "/quit")
         {
-            isPlaying = false;
             return;
         } 
         else if (input == "/help")
@@ -824,6 +835,7 @@ void Board::startGame() {
         else if (input == "/draw")
         {
             isPlaying = false;
+            return;
         } else {
             if (correctMovementPattern(input)) {
                 // get initial and final positions
@@ -837,7 +849,7 @@ void Board::startGame() {
                 board[7 - end.getLine()][end.getColumn()] = board[7 - start.getLine()][start.getColumn()];
                 board[7 - start.getLine()][start.getColumn()] = nullptr;
                 
-                // isWhitePlaying = !isWhitePlaying;
+                isWhitePlaying = !isWhitePlaying;
             } else if (correctKingsideCastlingPattern(input)) {
                 continue;
             } else if (correctQueensideCastlingPattern(input)) {
