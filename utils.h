@@ -1,13 +1,117 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <regex>
 
 using namespace std;
+
+#define white "\x1B[37m"
+#define bold "\x1b[1m"
+#define reset "\x1b[0m"
+#define orange "\x1B[33m"
+#define blue "\x1B[34m"
+#define red "\x1B[31m"
 
 enum class Color {
     WHITE,
     BLACK
 };
+
+void printBegin() {
+    cout << endl;
+    cout << bold << white;
+    cout << endl;
+    cout << "\t\t┌────────────────┐" << endl;
+    cout << "\t\t│ Jeu d'échec ♟♙ │" << endl;
+    cout << "\t\t└────────────────┘" << endl;
+    cout << endl;
+
+    cout << "\t👋 Bienvenue dans le jeu d'échec !" << endl;
+    cout << "\t👥 Il s'agit d'un jeu en local, soyez 2 pour y jouer." << endl;
+
+    cout << reset << bold;
+
+    cout << endl;
+
+    cout << "\t🕹️  Pour commencer une partie, tapez" << orange << " \\play" << endl;
+    cout << reset << bold;
+    cout << "\t📜 Pour voir comment jouer au jeu, tapez" << orange << " \\help" << endl;
+    cout << reset << bold;
+    cout << "\t🚪 Pour quitter le jeu, tapez" << orange << " \\quit" << endl;
+
+    cout << endl;
+    cout << endl;
+}
+
+void printHelp() {
+    cout << bold << white;
+    cout << endl;
+    cout << endl;
+    cout << "\t\t┌──────────────────┐" << endl;
+    cout << "\t\t│ 📜 Comment jouer │" << endl;
+    cout << "\t\t└──────────────────┘" << endl;
+
+    cout << endl;
+
+    cout << reset << bold;
+    cout << "\t🕹️  Pour déplacer une pièce, tapez" << orange << " <position de début><position d'arrivée>" << endl;
+    cout << reset << bold;
+    cout << "\tExemple : pour déplacer le pion en e2 à e4, tapez" << orange << " e2e4" << endl;
+    cout << reset;
+
+    cout << endl;
+
+    string skip;
+    cout << "Appuyez sur ";
+    cout << white << bold << "Entrée" << reset;
+    cout << " pour continuer...";
+    cin.ignore();
+    getline(cin, skip);
+
+    cout << endl;
+    cout << endl;
+}
+
+
+void printQuit() {
+    cout << bold << white;
+    cout << endl;
+    cout << endl;
+    cout << "\t\t┌───────────────────┐" << endl;
+    cout << "\t\t│ 🚪 Quitter le jeu │" << endl;
+    cout << "\t\t└───────────────────┘" << endl;
+
+    cout << endl;
+
+    cout << reset << bold;
+    cout << "\t👋 Merci d'avoir joué, à bientôt !" << endl;
+    cout << endl;
+}
+
+int getInputStart() {
+    string input;
+
+    while (true)
+    {
+        cout << white << bold;
+        cout << "🔧 Entrez votre commande: ";
+        cout << orange;
+        cin >> input;
+
+        if (input == "\\quit") {
+            return 0;
+        } else if (input == "\\play") {
+            return 1;
+        } else if (input == "\\help") {
+            printHelp();
+        } else {
+            cout << red;
+            cout << "🚫 Commande invalide, veuillez réessayer." << endl;
+            cout << reset;
+            cout << endl;
+        }
+    }
+}
 
 class Square {
 private:
@@ -103,6 +207,16 @@ public:
         Piece((color == Color::WHITE ? "♚" : "♔"), color, id, position) {}
 };
 
+bool saisie_correcte(string const & cmd) {
+    regex mouvmtpattern("[a-h][1-8][a-h][1-8]");
+        return regex_match(cmd,mouvmtpattern);
+}
+
+bool saisie_correcte_petitroque(string const & cmd) {
+    regex mouvmtpattern("(O|o|0)-(O|o|0)");
+        return regex_match(cmd,mouvmtpattern);
+}
+
 class Board {
 private:
     vector< vector<Piece*> > board;
@@ -144,6 +258,7 @@ public:
 
     void show() {
         cout << endl;
+        cout << white << bold;
         cout << "\t     a   b   c   d   e   f   g   h  \n";
         cout << "\t   ┌───┬───┬───┬───┬───┬───┬───┬───┐\n";
         for (int i = 0; i < 7; i++) {
@@ -187,5 +302,106 @@ public:
         cout << "\t     a   b   c   d   e   f   g   h  \n";
         cout << endl;
         
+    }
+
+    string getInput(bool isWhitePlaying) {
+        string input;
+        cout << endl;
+        cout << blue << bold;
+        if (isWhitePlaying) {
+            cout << "Aux blancs de jouer." << endl;
+        } else {
+            cout << "Aux noirs de jouer." << endl;
+        }
+        cout << white << bold;
+        cout << "🕹️  Entrez votre coup: ";
+        cout << orange;
+        cin >> input;
+        cout << reset;
+
+        return input;
+    }
+
+    void begin() {
+        
+        bool isWhitePlaying = true;
+        bool isPlaying = true;
+        bool isCheck = false;
+        bool isCheckmate = false;
+        bool whiteWin = false;
+        bool blackWin = false;
+
+        while (isPlaying) {
+            show();
+
+            string input = getInput(isWhitePlaying);
+            
+            if (input == "\\quit") {
+                isPlaying = false;
+                return;
+            } else if (input == "\\help") {
+                printHelp();
+            } else if (input == "\\resign") {
+                cout << endl;
+                cout << blue;
+                cout << "Abandon de la partie par les ";
+                cout << bold << (isWhitePlaying ? "blancs" : "noirs") << ".";
+                cout << endl;
+
+                isPlaying = false;
+                if (isWhitePlaying) {
+                    blackWin = true;
+                } else {
+                    whiteWin = true;
+                }
+            } else if (input == "\\draw") {
+                cout << endl;
+                cout << "Proposition de match nul par les ";
+                cout << white << bold << (isWhitePlaying ? "blancs" : "noirs") << ".";
+                cout << endl;
+                cout << reset;
+                cout << "🤝 Acceptez-vous la proposition de match nul ? (y/n): ";
+                string response;
+                cin >> response;
+
+
+                if (response == "y") {
+                    cout << endl;
+                    isPlaying = false;
+                } else {
+                    cout << endl;
+                    cout << red << bold;
+                    cout << "⛔ Proposition de match nul refusée." << endl;
+                    cout << reset;
+                }
+            
+            } else {
+                if (saisie_correcte(input)) {
+                    cout << "Déplacement de " << input << endl;
+                    isWhitePlaying = !isWhitePlaying;
+                } else if (saisie_correcte_petitroque(input)) {
+                    cout << "Petit roque" << endl;
+                } else {
+                    cout << red << bold;
+                    cout << "🚫 Commande invalide, veuillez réessayer (tapez "; 
+                    cout << orange << "\\help" << red;
+                    cout << " pour voir les coups valides)." << endl;
+                    cout << reset;
+                }
+            }
+        }
+
+        if (whiteWin || blackWin) {
+            cout << endl;
+            cout << "🎉 ";
+            cout << white << bold;
+            cout << (whiteWin ? "Les blancs" : "Les noirs");
+            cout << reset;
+            cout << " remportent la partie !" << endl;
+        } else {
+            cout << endl;
+            cout << "🤝 La partie se termine sur un match nul." << endl;
+        }
+
     }
 };
