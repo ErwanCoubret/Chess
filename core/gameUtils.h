@@ -57,7 +57,7 @@ public:
         position(position)
     {}
 
-    string getName() const {
+    string getIcon() const {
         return name;
     }
 
@@ -159,8 +159,11 @@ public:
     // check if the move is valid
     bool validMove(string input, bool isWhitePlaying);
 
-    // check if the move is valid for a white piece
+    // check if the move is valid for a specific piece
     bool checkMove(Piece* piece, Square start, Square end);
+
+    // check if the king is in check
+    bool checkCheck(bool isWhitePlaying);
 
     // Start the game
     void startGame();
@@ -172,27 +175,27 @@ public:
 void Board::initGame() {
 
     // ----- position setup for the pieces -----
-    board[0][0] = new Rook(Color::BLACK, 1, "a1");
-    board[0][1] = new Knight(Color::BLACK, 2, "b1");
-    board[0][2] = new Bishop(Color::BLACK, 3, "c1");
-    board[0][3] = new Queen(Color::BLACK, 4, "d1");
-    board[0][4] = new King(Color::BLACK, 5, "e1");
-    board[0][5] = new Bishop(Color::BLACK, 6, "f1");
-    board[0][6] = new Knight(Color::BLACK, 7, "g1");
-    board[0][7] = new Rook(Color::BLACK, 8, "h1");
+    board[0][0] = new Rook(Color::WHITE, 1, "a1");
+    board[0][1] = new Knight(Color::WHITE, 2, "b1");
+    board[0][2] = new Bishop(Color::WHITE, 3, "c1");
+    board[0][3] = new Queen(Color::WHITE, 4, "d1");
+    board[0][4] = new King(Color::WHITE, 5, "e1");
+    board[0][5] = new Bishop(Color::WHITE, 6, "f1");
+    board[0][6] = new Knight(Color::WHITE, 7, "g1");
+    board[0][7] = new Rook(Color::WHITE, 8, "h1");
 
-    board[7][0] = new Rook(Color::WHITE, 9, "a8");
-    board[7][1] = new Knight(Color::WHITE, 10, "b8");
-    board[7][2] = new Bishop(Color::WHITE, 11, "c8");
-    board[7][3] = new Queen(Color::WHITE, 12, "d8");
-    board[7][4] = new King(Color::WHITE, 13, "e8");
-    board[7][5] = new Bishop(Color::WHITE, 14, "f8");
-    board[7][6] = new Knight(Color::WHITE, 15, "g8");
-    board[7][7] = new Rook(Color::WHITE, 16, "h8");
+    board[7][0] = new Rook(Color::BLACK, 9, "a8");
+    board[7][1] = new Knight(Color::BLACK, 10, "b8");
+    board[7][2] = new Bishop(Color::BLACK, 11, "c8");
+    board[7][3] = new Queen(Color::BLACK, 12, "d8");
+    board[7][4] = new King(Color::BLACK, 13, "e8");
+    board[7][5] = new Bishop(Color::BLACK, 14, "f8");
+    board[7][6] = new Knight(Color::BLACK, 15, "g8");
+    board[7][7] = new Rook(Color::BLACK, 16, "h8");
 
     for (int i = 0; i < 8; i++) {
-        board[1][i] = new Pawn(Color::BLACK, i + 17, "a" + to_string(i + 2));
-        board[6][i] = new Pawn(Color::WHITE, i + 25, "a" + to_string(i + 7));
+        board[1][i] = new Pawn(Color::WHITE, i + 17, "a" + to_string(i + 2));
+        board[6][i] = new Pawn(Color::BLACK, i + 25, "a" + to_string(i + 7));
     }
 
     for (int i = 2; i < 6; i++)
@@ -212,19 +215,19 @@ void Board::showBoard() {
         cout << "\t" << 8 - i << "  │";
         for (int j = 0; j < 7; j++) {
             cout << " ";
-            if (board[i][j] == nullptr) {
+            if (board[7 - i][j] == nullptr) {
                 cout << "  │";
             } else {
-                cout << board[i][j]->getName() << " │";
+                cout << board[7 - i][j]->getIcon() << " │";
             }
             
         }
         
         cout << " ";
-        if (board[i][7] == nullptr) {
+        if (board[7 - i][7] == nullptr) {
             cout << "  │";
         } else {
-            cout << board[i][7]->getName() << " │";
+            cout << board[7 - i][7]->getIcon() << " │";
         }
         cout << endl;
         cout << "\t   ├───┼───┼───┼───┼───┼───┼───┼───┤\n";
@@ -232,17 +235,17 @@ void Board::showBoard() {
     cout << "\t1  │";
     for (int i = 0; i < 7; i++) {
         cout << " ";
-        if (board[7][i] == nullptr) {
+        if (board[0][i] == nullptr) {
             cout << "  │";
         } else {
-            cout << board[7][i]->getName() << " │";
+            cout << board[0][i]->getIcon() << " │";
         }
     }
     cout << " ";
-    if (board[7][7] == nullptr) {
+    if (board[0][7] == nullptr) {
         cout << "  │";
     } else {
-        cout << board[7][7]->getName() << " │";
+        cout << board[0][7]->getIcon() << " │";
     }
     cout << endl;
     cout << "\t   └───┴───┴───┴───┴───┴───┴───┴───┘\n";
@@ -296,7 +299,7 @@ string Board::getInput(bool isWhitePlaying) {
 
 bool Board::checkMove(Piece* piece, Square start, Square end) {
     // cout << piece->getPsymb() << start.getLine() << start.getColumn() << " to " << end.getLine() << end.getColumn();
-    Piece* endPiece = board[7 - end.getLine()][end.getColumn()];
+    Piece* endPiece = board[end.getLine()][end.getColumn()];
 
     // ----- WHITE PAWN LOGIC -----
     if (piece->getPsymb() == 'P' && piece->getColor() == Color::WHITE) {
@@ -314,7 +317,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
                 start.getLine() + 1 == 2 &&
                 end.getLine() == start.getLine() + 2 &&
                 endPiece == nullptr &&
-                board[7 - end.getLine() + 1][end.getColumn()] == nullptr
+                board[end.getLine() - 1][end.getColumn()] == nullptr
             ) {
                 return true;
             }
@@ -350,7 +353,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
                 start.getLine() + 1 == 7 &&
                 end.getLine() == start.getLine() - 2 &&
                 endPiece == nullptr &&
-                board[7 - end.getLine() - 1][end.getColumn()] == nullptr
+                board[end.getLine() + 1][end.getColumn()] == nullptr
             ) {
                 return true;
             }
@@ -377,7 +380,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
             // rook is moving up
             if (end.getLine() > start.getLine()) {
                 for (int i = start.getLine() + 1; i < end.getLine(); i++) {
-                    if (board[7 - i][end.getColumn()] != nullptr) {
+                    if (board[i][end.getColumn()] != nullptr) {
                         return false;
                     }
                 }
@@ -395,7 +398,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
             // rook is moving down
             if (end.getLine() < start.getLine()) {
                 for (int i = start.getLine() - 1; i > end.getLine(); i--) {
-                    if (board[7 - i][end.getColumn()] != nullptr) {
+                    if (board[i][end.getColumn()] != nullptr) {
                         return false;
                     }
                 }
@@ -416,7 +419,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
             // rook is moving right
             if (end.getColumn() > start.getColumn()) {
                 for (int i = start.getColumn() + 1; i < end.getColumn(); i++) {
-                    if (board[7 - end.getLine()][i] != nullptr) {
+                    if (board[end.getLine()][i] != nullptr) {
                         return false;
                     }
                 }
@@ -434,7 +437,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
             // rook is moving left
             if (end.getColumn() < start.getColumn()) {
                 for (int i = start.getColumn() - 1; i > end.getColumn(); i--) {
-                    if (board[7 - end.getLine()][i] != nullptr) {
+                    if (board[end.getLine()][i] != nullptr) {
                         return false;
                     }
                 }
@@ -476,7 +479,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
             // bishop is moving up-right
             if (end.getLine() > start.getLine() && end.getColumn() > start.getColumn()) {
                 for (int i = 1; i < end.getLine() - start.getLine(); i++) {
-                    if (board[7 - start.getLine() - i][start.getColumn() + i] != nullptr) {
+                    if (board[start.getLine() + i][start.getColumn() + i] != nullptr) {
                         return false;
                     }
                 }
@@ -494,7 +497,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
             // bishop is moving up-left
             if (end.getLine() > start.getLine() && end.getColumn() < start.getColumn()) {
                 for (int i = 1; i < end.getLine() - start.getLine(); i++) {
-                    if (board[7 - start.getLine() - i][start.getColumn() - i] != nullptr) {
+                    if (board[start.getLine() + i][start.getColumn() - i] != nullptr) {
                         return false;
                     }
                 }
@@ -512,7 +515,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
             // bishop is moving down-right
             if (end.getLine() < start.getLine() && end.getColumn() > start.getColumn()) {
                 for (int i = 1; i < start.getLine() - end.getLine(); i++) {
-                    if (board[7 - start.getLine() + i][start.getColumn() + i] != nullptr) {
+                    if (board[start.getLine() - i][start.getColumn() + i] != nullptr) {
                         return false;
                     }
                 }
@@ -530,7 +533,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
             // bishop is moving down-left
             if (end.getLine() < start.getLine() && end.getColumn() < start.getColumn()) {
                 for (int i = 1; i < start.getLine() - end.getLine(); i++) {
-                    if (board[7 - start.getLine() + i][start.getColumn() - i] != nullptr) {
+                    if (board[start.getLine() - i][start.getColumn() - i] != nullptr) {
                         return false;
                     }
                 }
@@ -554,7 +557,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
             // queen is moving up
             if (end.getLine() > start.getLine()) {
                 for (int i = start.getLine() + 1; i < end.getLine(); i++) {
-                    if (board[7 - i][end.getColumn()] != nullptr) {
+                    if (board[i][end.getColumn()] != nullptr) {
                         return false;
                     }
                 }
@@ -572,7 +575,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
             // queen is moving down
             if (end.getLine() < start.getLine()) {
                 for (int i = start.getLine() - 1; i > end.getLine(); i--) {
-                    if (board[7 - i][end.getColumn()] != nullptr) {
+                    if (board[i][end.getColumn()] != nullptr) {
                         return false;
                     }
                 }
@@ -593,7 +596,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
             // queen is moving right
             if (end.getColumn() > start.getColumn()) {
                 for (int i = start.getColumn() + 1; i < end.getColumn(); i++) {
-                    if (board[7 - end.getLine()][i] != nullptr) {
+                    if (board[end.getLine()][i] != nullptr) {
                         return false;
                     }
                 }
@@ -611,7 +614,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
             // queen is moving left
             if (end.getColumn() < start.getColumn()) {
                 for (int i = start.getColumn() - 1; i > end.getColumn(); i--) {
-                    if (board[7 - end.getLine()][i] != nullptr) {
+                    if (board[end.getLine()][i] != nullptr) {
                         return false;
                     }
                 }
@@ -632,7 +635,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
             // queen is moving up-right
             if (end.getLine() > start.getLine() && end.getColumn() > start.getColumn()) {
                 for (int i = 1; i < end.getLine() - start.getLine(); i++) {
-                    if (board[7 - start.getLine() - i][start.getColumn() + i] != nullptr) {
+                    if (board[start.getLine() + i][start.getColumn() + i] != nullptr) {
                         return false;
                     }
                 }
@@ -650,7 +653,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
             // queen is moving up-left
             if (end.getLine() > start.getLine() && end.getColumn() < start.getColumn()) {
                 for (int i = 1; i < end.getLine() - start.getLine(); i++) {
-                    if (board[7 - start.getLine() - i][start.getColumn() - i] != nullptr) {
+                    if (board[start.getLine() + i][start.getColumn() - i] != nullptr) {
                         return false;
                     }
                 }
@@ -668,7 +671,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
             // queen is moving down-right
             if (end.getLine() < start.getLine() && end.getColumn() > start.getColumn()) {
                 for (int i = 1; i < start.getLine() - end.getLine(); i++) {
-                    if (board[7 - start.getLine() + i][start.getColumn() + i] != nullptr) {
+                    if (board[start.getLine() - i][start.getColumn() + i] != nullptr) {
                         return false;
                     }
                 }
@@ -686,7 +689,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
             // queen is moving down-left
             if (end.getLine() < start.getLine() && end.getColumn() < start.getColumn()) {
                 for (int i = 1; i < start.getLine() - end.getLine(); i++) {
-                    if (board[7 - start.getLine() + i][start.getColumn() - i] != nullptr) {
+                    if (board[start.getLine() - i][start.getColumn() - i] != nullptr) {
                         return false;
                     }
                 }
@@ -755,12 +758,40 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
     return false;
 }
 
+bool Board::checkCheck(bool isWhitePlaying) {
+    // get the king position
+    string kingPosition;
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            if (board[i][j] != nullptr && board[i][j]->getPsymb() == 'K' && board[i][j]->getColor() == (isWhitePlaying ? Color::WHITE : Color::BLACK)) {
+                kingPosition = board[i][j]->getPosition();
+            }   
+        }
+    }
+
+    cout << endl << (isWhitePlaying ? "White" : "Black") << " king position: " << kingPosition << endl;
+
+    // check if the king is in check
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            if (board[i][j] != nullptr && board[i][j]->getColor() != (isWhitePlaying ? Color::WHITE : Color::BLACK)) {
+                if (checkMove(board[i][j], Square(&board[i][j]->getPosition()[0]), Square(&kingPosition[0]))) {
+                    cout << "King is in check." << endl;
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
 bool Board::validMove(string input, bool isWhitePlaying) {
     Square start(&input[0]);
     Square end(&input[2]);
 
     // get the piece at the initial position
-    Piece* piece = board[7 - start.getLine()][start.getColumn()];
+    Piece* piece = board[start.getLine()][start.getColumn()];
 
     // check if there is a piece at the initial position
     if (piece == nullptr) {
@@ -798,12 +829,6 @@ bool Board::validMove(string input, bool isWhitePlaying) {
 }
 
 void Board::startGame() {
-    
-    // ----- Game status -----
-    
-
-    // printBegin();
-
     // ----- Game loop -----
     while (isPlaying) {
         showBoard();
@@ -838,7 +863,7 @@ void Board::startGame() {
             return;
         } else {
             if (correctMovementPattern(input)) {
-                // get initial and final positions
+
                 if (!validMove(input, isWhitePlaying)) {
                     continue;
                 }
@@ -846,8 +871,21 @@ void Board::startGame() {
                 // move the piece
                 Square start(&input[0]);
                 Square end(&input[2]);
-                board[7 - end.getLine()][end.getColumn()] = board[7 - start.getLine()][start.getColumn()];
-                board[7 - start.getLine()][start.getColumn()] = nullptr;
+                board[end.getLine()][end.getColumn()] = board[start.getLine()][start.getColumn()];
+                board[start.getLine()][start.getColumn()] = nullptr;
+
+                // check if the other player is in check
+                // if (checkCheck(!isWhitePlaying)) {
+                //     cout << red << bold;
+                //     cout << "👑 Ce mouvement met le roi " << (isWhitePlaying ? "blanc" : "noir") << " en échec." << endl;
+                //     cout << reset;
+                //     board[7 - start.getLine()][start.getColumn()] = board[7 - end.getLine()][end.getColumn()];
+                //     board[7 - end.getLine()][end.getColumn()] = nullptr;
+                //     continue;
+                // } else {
+                //     cout << "✅ Mouvement " << input << " effectué." << endl;
+                //     cout << reset;
+                // }
                 
                 isWhitePlaying = !isWhitePlaying;
             } else if (correctKingsideCastlingPattern(input)) {
