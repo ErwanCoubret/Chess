@@ -3,129 +3,9 @@
 #include <string>
 #include <regex>
 #include "interface.h"
+#include "pieces.h"
 
 using namespace std;
-
-enum class Color {
-    WHITE,
-    BLACK
-};
-
-// -------------------------------------
-//              PIECES
-// -------------------------------------
-
-class Square {
-private:
-    int column;
-    int line;
-public:
-    Square(char* move) :
-        column(move[0] - 'a'),
-        line(move[1] - '1')
-    {}
-
-    int getLine() const {
-        return line;
-    }
-
-    int getColumn() const {
-        return column;
-    }
-
-    string toString() const {
-        string str = "";
-        str += column + 'a';
-        str += line + '1';
-        return str;
-    }
-};
-
-class Piece {
-private:
-    string name;
-    Color color;
-    char psymb;
-    int id;
-    string position;
-    bool hasMoved = false;
-public:
-    Piece(string name, Color color, char psymb, int id, string position) :
-        name(name),
-        color(color),
-        psymb(psymb),
-        id(id),
-        position(position)
-    {}
-
-    string getIcon() const {
-        return name;
-    }
-
-    char getPsymb() const {
-        return psymb;
-    }
-
-    Color getColor() const {
-        return color;
-    }
-
-    string getPosition() const {
-        return position;
-    }
-
-    void setPosition(string position) {
-        this->position = position;
-    }
-
-    bool getHasMoved() const {
-        return hasMoved;
-    }
-
-    void setHasMoved() {
-        this->hasMoved = true;
-    }
-};
-
-class Pawn : public Piece {
-public:
-    Pawn(Color color, int id, string position) :
-        Piece((color == Color::WHITE ? "♙" : "♟"), color, 'P', id, position) {}
-};
-
-class Rook : public Piece {
-public:
-    Rook(Color color, int id, string position) :
-        Piece((color == Color::WHITE ? "♖" : "♜"), color, 'R', id, position) {}
-};
-
-class Knight : public Piece {
-public:
-    Knight(Color color, int id, string position) :
-        Piece((color == Color::WHITE ? "♘" : "♞"), color, 'N', id, position) {}
-};
-
-class Bishop : public Piece {
-public:
-    Bishop(Color color, int id, string position) :
-        Piece((color == Color::WHITE ? "♗" : "♝"), color, 'B', id, position) {}
-};
-
-class Queen : public Piece {
-public:
-    Queen(Color color, int id, string position) :
-        Piece((color == Color::WHITE ? "♕" : "♛"), color, 'Q', id, position) {}
-};
-
-class King : public Piece {
-public:
-    King(Color color, int id, string position) :
-        Piece((color == Color::WHITE ? "♔" : "♚"), color, 'K', id, position) {}
-};
-
-// -------------------------------------
-//              UTILS
-// -------------------------------------
 
 bool correctMovementPattern(string const & cmd) {
     regex mouvementPattern("[a-h][1-8][a-h][1-8]");
@@ -138,7 +18,7 @@ bool correctKingsideCastlingPattern(string const & cmd) {
 }
 
 bool correctQueensideCastlingPattern(string const & cmd) {
-    regex queensideCastlingPattern("(O|o|0)-(O|o|0)");
+    regex queensideCastlingPattern("(O|o|0)-(O|o|0)-(O|o|0)");
     return regex_match(cmd, queensideCastlingPattern);
 }
 
@@ -167,6 +47,9 @@ public:
 
     // check if the move is valid
     bool validMove(string input, bool isWhitePlaying);
+
+    // check if the kingside castling move is valid
+    bool validKingSideCastling(bool isWhitePlaying);
 
     // check if the move is valid for a specific piece
     bool checkMove(Piece* piece, Square start, Square end);
@@ -854,6 +737,79 @@ bool Board::validMove(string input, bool isWhitePlaying) {
     return true;
 }
 
+bool Board::validKingSideCastling(bool isWhitePlaying) {
+    // find the king and the rook positions
+    Square kingSquare(&board[isWhitePlaying ? 0 : 7][4]->getPosition()[0]);
+    Square rookSquare(&board[isWhitePlaying ? 0 : 7][7]->getPosition()[0]);
+
+    // get the king and the rook
+    Piece* king = board[kingSquare.getLine()][kingSquare.getColumn()];
+    Piece* rook = board[rookSquare.getLine()][rookSquare.getColumn()];
+
+    // check if the king and the rook haven't moved
+    if (king->getHasMoved() || rook->getHasMoved()) {
+        cout << red << bold;
+        cout << "🚫 Le roi ou la tour a déjà bougé." << endl;
+        cout << reset;
+        return false;
+    }
+
+    // check if the squares between the king and the rook are empty
+    if (
+        board[rookSquare.getLine()][rookSquare.getColumn() - 1] != nullptr ||
+        board[rookSquare.getLine()][rookSquare.getColumn() - 2] != nullptr
+    ) {
+        cout << red << bold;
+        cout << "🚫 Les cases entre le roi et la tour ne sont pas vides." << endl;
+        cout << reset;
+        return false;
+    }
+
+    // check if the king is not in check
+    if (checkCheck(isWhitePlaying)) {
+        cout << red << bold;
+        cout << "🚫 Le roi " << (isWhitePlaying ? "blanc" : "noir") << " est en échec." << endl;
+        cout << reset;
+        return false;
+    }
+
+    // check if the king doesn't pass through a square that is attacked by an opponent piece
+    // we do it by trying to move the king to the squares between the king and the rook
+    // if the king is in check after the move, the castling is not valid
+
+    // move the king to the first square
+    board[kingSquare.getLine()][kingSquare.getColumn() + 1] = king;
+    board[kingSquare.getLine()][kingSquare.getColumn()] = nullptr;
+
+    if (checkCheck(isWhitePlaying)) {
+        cout << red << bold;
+        cout << "🚫 Une des cases du roc est invalide" << endl;
+        cout << reset;
+        board[kingSquare.getLine()][kingSquare.getColumn() + 1] = nullptr;
+        board[kingSquare.getLine()][kingSquare.getColumn()] = king;
+        return false;
+    }
+
+    // move the king to the second square
+    board[kingSquare.getLine()][kingSquare.getColumn() + 2] = king;
+    board[kingSquare.getLine()][kingSquare.getColumn()] = nullptr;
+
+    if (checkCheck(isWhitePlaying)) {
+        cout << red << bold;
+        cout << "🚫 Une des cases du roc est invalide" << endl;
+        cout << reset;
+        board[kingSquare.getLine()][kingSquare.getColumn() + 2] = nullptr;
+        board[kingSquare.getLine()][kingSquare.getColumn()] = king;
+        return false;
+    }
+
+    // move the king back to the initial position
+    board[kingSquare.getLine()][kingSquare.getColumn()] = king;
+    board[rookSquare.getLine()][rookSquare.getColumn() - 2] = nullptr;
+
+    return true;
+}
+
 void Board::startGame() {
     // ----- Game loop -----
     while (isPlaying) {
@@ -900,7 +856,28 @@ void Board::startGame() {
                 board[end.getLine()][end.getColumn()]->setPosition(end.toString());
                 board[end.getLine()][end.getColumn()]->setHasMoved();
             } else if (correctKingsideCastlingPattern(input)) {
-                continue;
+                if (!validKingSideCastling(isWhitePlaying))
+                    continue;
+                
+                // find the king and the rook positions
+                Square kingSquare(&board[isWhitePlaying ? 0 : 7][4]->getPosition()[0]);
+                Square rookSquare(&board[isWhitePlaying ? 0 : 7][7]->getPosition()[0]);
+
+                // get the king and the rook
+                Piece* king = board[kingSquare.getLine()][kingSquare.getColumn()];
+                Piece* rook = board[rookSquare.getLine()][rookSquare.getColumn()];
+
+                // move the king and the rook
+                board[rookSquare.getLine()][rookSquare.getColumn() - 1] = king;
+                board[rookSquare.getLine()][rookSquare.getColumn() - 2] = rook;
+                board[kingSquare.getLine()][kingSquare.getColumn()] = nullptr;
+                board[rookSquare.getLine()][rookSquare.getColumn()] = nullptr;
+
+                // update the positions
+                board[rookSquare.getLine()][rookSquare.getColumn() - 1]->setPosition((isWhitePlaying? "g1" : "g8"));
+                board[rookSquare.getLine()][rookSquare.getColumn() - 2]->setPosition((isWhitePlaying? "f1" : "f8"));
+                board[rookSquare.getLine()][rookSquare.getColumn() - 1]->setHasMoved();
+                board[rookSquare.getLine()][rookSquare.getColumn() - 2]->setHasMoved();
             } else if (correctQueensideCastlingPattern(input)) {
                 continue;
             }

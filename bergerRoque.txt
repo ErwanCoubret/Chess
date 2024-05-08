@@ -1,8 +1,8 @@
 e2e4
 e7e5
-d1h5
-b8c6
-f1c4
+f1e2
+f8a3
+g1f3
 g8f6
 o-o
 /quit
