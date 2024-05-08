@@ -10,7 +10,6 @@ int main() {
     chessBoard.initGame();
 
     printQuit();
-
     cout << chessBoard.canonical_position() << endl;
-    return 0;
+    return EXIT_SUCCESS;
 }
