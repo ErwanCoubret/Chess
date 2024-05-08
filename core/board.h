@@ -51,6 +51,9 @@ public:
     // check if the kingside castling move is valid
     bool validKingSideCastling(bool isWhitePlaying);
 
+    // check if the queenside castling move is valid
+    bool validQueenSideCastling(bool isWhitePlaying);
+
     // check if the move is valid for a specific piece
     bool checkMove(Piece* piece, Square start, Square end);
 
@@ -780,32 +783,116 @@ bool Board::validKingSideCastling(bool isWhitePlaying) {
     // move the king to the first square
     board[kingSquare.getLine()][kingSquare.getColumn() + 1] = king;
     board[kingSquare.getLine()][kingSquare.getColumn()] = nullptr;
+    board[kingSquare.getLine()][kingSquare.getColumn() + 1]->setPosition((isWhitePlaying? "f1" : "f8"));
 
     if (checkCheck(isWhitePlaying)) {
         cout << red << bold;
-        cout << "🚫 Une des cases du roc est invalide" << endl;
+        cout << "🚫 Une des cases du roc est attaquée" << endl;
         cout << reset;
         board[kingSquare.getLine()][kingSquare.getColumn() + 1] = nullptr;
         board[kingSquare.getLine()][kingSquare.getColumn()] = king;
+        board[kingSquare.getLine()][kingSquare.getColumn()]->setPosition((isWhitePlaying? "e1" : "e8"));
         return false;
     }
 
     // move the king to the second square
     board[kingSquare.getLine()][kingSquare.getColumn() + 2] = king;
-    board[kingSquare.getLine()][kingSquare.getColumn()] = nullptr;
+    board[kingSquare.getLine()][kingSquare.getColumn() + 1] = nullptr;
+    board[kingSquare.getLine()][kingSquare.getColumn() + 2]->setPosition((isWhitePlaying? "g1" : "g8"));
 
     if (checkCheck(isWhitePlaying)) {
         cout << red << bold;
-        cout << "🚫 Une des cases du roc est invalide" << endl;
+        cout << "🚫 Une des cases du roc est attaquée" << endl;
         cout << reset;
         board[kingSquare.getLine()][kingSquare.getColumn() + 2] = nullptr;
         board[kingSquare.getLine()][kingSquare.getColumn()] = king;
+        board[kingSquare.getLine()][kingSquare.getColumn()]->setPosition((isWhitePlaying? "e1" : "e8"));
         return false;
     }
 
     // move the king back to the initial position
     board[kingSquare.getLine()][kingSquare.getColumn()] = king;
-    board[rookSquare.getLine()][rookSquare.getColumn() - 2] = nullptr;
+    board[kingSquare.getLine()][kingSquare.getColumn() + 2] = nullptr;
+    board[kingSquare.getLine()][kingSquare.getColumn()]->setPosition((isWhitePlaying? "e1" : "e8"));
+
+    return true;
+}
+
+bool Board::validQueenSideCastling(bool isWhitePlaying) {
+    // find the king and the rook positions
+    Square kingSquare(&board[isWhitePlaying ? 0 : 7][4]->getPosition()[0]);
+    Square rookSquare(&board[isWhitePlaying ? 0 : 7][0]->getPosition()[0]);
+
+    // get the king and the rook
+    Piece* king = board[kingSquare.getLine()][kingSquare.getColumn()];
+    Piece* rook = board[rookSquare.getLine()][rookSquare.getColumn()];
+
+    // check if the king and the rook haven't moved
+    if (king->getHasMoved() || rook->getHasMoved()) {
+        cout << red << bold;
+        cout << "🚫 Le roi ou la tour a déjà bougé." << endl;
+        cout << reset;
+        return false;
+    }
+
+    // check if the squares between the king and the rook are empty
+    if (
+        board[rookSquare.getLine()][rookSquare.getColumn() + 1] != nullptr ||
+        board[rookSquare.getLine()][rookSquare.getColumn() + 2] != nullptr ||
+        board[rookSquare.getLine()][rookSquare.getColumn() + 3] != nullptr
+    ) {
+        cout << red << bold;
+        cout << "🚫 Les cases entre le roi et la tour ne sont pas vides." << endl;
+        cout << reset;
+        return false;
+    }
+
+    // check if the king is not in check
+    if (checkCheck(isWhitePlaying)) {
+        cout << red << bold;
+        cout << "🚫 Le roi " << (isWhitePlaying ? "blanc" : "noir") << " est en échec." << endl;
+        cout << reset;
+        return false;
+    }
+
+    // check if the king doesn't pass through a square that is attacked by an opponent piece
+    // we do it by trying to move the king to the squares between the king and the rook
+    // if the king is in check after the move, the castling is not valid
+
+    // move the king to the first square
+    board[kingSquare.getLine()][kingSquare.getColumn() - 1] = king;
+    board[kingSquare.getLine()][kingSquare.getColumn()] = nullptr;
+    board[kingSquare.getLine()][kingSquare.getColumn() - 1]->setPosition((isWhitePlaying? "d1" : "d8"));
+
+    if (checkCheck(isWhitePlaying)) {
+        cout << red << bold;
+        cout << "🚫 Une des cases du roc est attaquée" << endl;
+        cout << reset;
+        board[kingSquare.getLine()][kingSquare.getColumn() - 1] = nullptr;
+        board[kingSquare.getLine()][kingSquare.getColumn()] = king;
+        board[kingSquare.getLine()][kingSquare.getColumn()]->setPosition((isWhitePlaying? "e1" : "e8"));
+        return false;
+    }
+
+    // move the king to the second square
+    board[kingSquare.getLine()][kingSquare.getColumn() - 2] = king;
+    board[kingSquare.getLine()][kingSquare.getColumn() - 1] = nullptr;
+    board[kingSquare.getLine()][kingSquare.getColumn() - 2]->setPosition((isWhitePlaying? "c1" : "c8"));
+
+    if (checkCheck(isWhitePlaying)) {
+        cout << red << bold;
+        cout << "🚫 Une des cases du roc est attaquée" << endl;
+        cout << reset;
+        board[kingSquare.getLine()][kingSquare.getColumn() - 2] = nullptr;
+        board[kingSquare.getLine()][kingSquare.getColumn()] = king;
+        board[kingSquare.getLine()][kingSquare.getColumn()]->setPosition((isWhitePlaying? "e1" : "e8"));
+        return false;
+    }
+
+    // move the king back to the initial position
+    board[kingSquare.getLine()][kingSquare.getColumn()] = king;
+    board[rookSquare.getLine()][rookSquare.getColumn() + 3] = nullptr;
+    board[kingSquare.getLine()][kingSquare.getColumn()]->setPosition((isWhitePlaying? "e1" : "e8"));
 
     return true;
 }
@@ -879,9 +966,31 @@ void Board::startGame() {
                 board[rookSquare.getLine()][rookSquare.getColumn() - 1]->setHasMoved();
                 board[rookSquare.getLine()][rookSquare.getColumn() - 2]->setHasMoved();
             } else if (correctQueensideCastlingPattern(input)) {
-                continue;
+                if (!validQueenSideCastling(isWhitePlaying))
+                    continue;
+                
+                // find the king and the rook positions
+                Square kingSquare(&board[isWhitePlaying ? 0 : 7][4]->getPosition()[0]);
+                Square rookSquare(&board[isWhitePlaying ? 0 : 7][0]->getPosition()[0]);
+
+                // get the king and the rook
+                Piece* king = board[kingSquare.getLine()][kingSquare.getColumn()];
+                Piece* rook = board[rookSquare.getLine()][rookSquare.getColumn()];
+
+                // move the king and the rook
+                board[kingSquare.getLine()][kingSquare.getColumn() - 2] = king;
+                board[kingSquare.getLine()][kingSquare.getColumn() - 1] = rook;
+                board[kingSquare.getLine()][kingSquare.getColumn()] = nullptr;
+                board[rookSquare.getLine()][rookSquare.getColumn()] = nullptr;
+
+                // update the positions
+                board[kingSquare.getLine()][kingSquare.getColumn() - 2]->setPosition((isWhitePlaying? "c1" : "c8"));
+                board[kingSquare.getLine()][kingSquare.getColumn() - 1]->setPosition((isWhitePlaying? "d1" : "d8"));
+                board[kingSquare.getLine()][kingSquare.getColumn() - 2]->setHasMoved();
+                board[kingSquare.getLine()][kingSquare.getColumn() - 1]->setHasMoved();
             }
-            else {
+            else
+            {
                 cout << red << bold;
                 cout << "🚫 Commande invalide, veuillez réessayer (tapez "; 
                 cout << orange << "/help" << red;

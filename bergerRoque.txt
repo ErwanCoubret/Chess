@@ -3,6 +3,8 @@ e7e5
 f1e2
 f8a3
 g1f3
-g8f6
+d8g5
+d2d3
+g5g2
 o-o
 /quit
