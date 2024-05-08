@@ -1,25 +1,16 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include "utils.h"
+#include "core/gameUtils.h"
 
 using namespace std;
 
 int main() {
-    // printBegin();
-
-    // int gameStart = getInputStart();
-    int gameStart = 1;
-
-    while (gameStart)
-    {
-        Board chessBoard;
-        chessBoard.init();
-        chessBoard.begin();
-
-        break;
-    }
+    Board chessBoard;
+    chessBoard.initGame();
 
     printQuit();
+
+    cout << chessBoard.canonical_position() << endl;
     return 0;
 }
