@@ -36,7 +36,7 @@ test_3: compile
 test_4: compile
 	cd $(TEST_DIR) && ./test-level.sh 4 && cd ..
 
-tests: test_1 test_2 test_3
+tests: test_1 test_2 test_3 test_4
 
 # Nettoyage
 clean:

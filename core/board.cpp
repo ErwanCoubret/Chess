@@ -557,24 +557,31 @@ string Board::findKingPosition(bool isWhitePlaying) {
 }
 
 bool Board::isCheck(bool isWhitePlaying) {
-    // get the king position
+    // Récupérer la position du roi
     string kingPosition = findKingPosition(isWhitePlaying);
     
-    // check if the king is in check
+    // Créer un objet Square pour la position du roi
+    Square kingSquare(&kingPosition[0]);
+
+    // Parcourir le tableau pour trouver les pièces adverses
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
             if (
                 board[i][j] != nullptr &&
                 board[i][j]->getColor() != (isWhitePlaying ? Color::WHITE : Color::BLACK)
             ) {
-                if (
-                    checkPieceMove(board[i][j], Square(&board[i][j]->getPosition()[0]), Square(&kingPosition[0]))
-                ) {
+                // Créer un objet Square pour la position de la pièce adverse
+                Square opponentPiece(&board[i][j]->getPosition()[0]);
+
+                // Vérifier si la pièce adverse peut capturer le roi
+                if (checkPieceMove(board[i][j], opponentPiece, kingSquare)) {
+                    // cout << board[i][j]->getPsymb() << " en " << board[i][j]->getPosition() << " peut capturer le roi " << (isWhitePlaying ? "blanc" : "noir") << " en " << kingPosition << endl;
                     return true;
                 }
             }
         }
     }
+
     return false;
 }
 
@@ -618,6 +625,7 @@ bool Board::isCheckmate(bool isWhitePlaying) {
 
                 board[kingSquare.getLine()][kingSquare.getColumn()] = king;
                 board[kingSquare.getLine() + i][kingSquare.getColumn() + j] = endPiece;
+                board[kingSquare.getLine()][kingSquare.getColumn()]->setPosition(kingPosition);
                 if (endPiece != nullptr) {
                     board[kingSquare.getLine() + i][kingSquare.getColumn() + j]->setPosition(endPiece->getPosition());
                 }
@@ -651,8 +659,6 @@ bool Board::isCheckmate(bool isWhitePlaying) {
                             board[i][j] = nullptr;
 
                             if (!isCheck(isWhitePlaying)) {
-                                cout << "On peut jouer " << board[k][l]->getPsymb() << (isWhitePlaying ? " blanc" : " noir") 
-                                 << " de " << startPosition << " à " << endPosition << endl;
                                 board[i][j] = board[k][l];
                                 board[k][l] = endPiece;
                                 if (endPiece != nullptr) {

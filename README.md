@@ -66,3 +66,10 @@ make clean
      |     
      |-- ************************************************************************
 ```
+
+## 💭 Feedbacks on the project
+
+- Problems with setPosition()
+- found fun to debug even it could be chronovore
+- globally a good project to learn C++ and the logic of a chess game, I always thought that a day I would do it and it was a good opportunity to do it
+- 
