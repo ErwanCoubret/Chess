@@ -6,4 +6,5 @@ f1c4
 g8f6
 g1f3
 f8e7
+h5f7
 /quit

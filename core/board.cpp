@@ -145,7 +145,6 @@ string Board::getInput(bool isWhitePlaying) {
 }
 
 bool Board::checkMove(Piece* piece, Square start, Square end) {
-    // cout << piece->getPsymb() << start.getLine() << start.getColumn() << " to " << end.getLine() << end.getColumn();
     Piece* endPiece = board[end.getLine()][end.getColumn()];
 
     // ----- WHITE PAWN LOGIC -----
@@ -166,6 +165,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
                 endPiece == nullptr &&
                 board[end.getLine() - 1][end.getColumn()] == nullptr
             ) {
+                cout << "here" << endl;
                 possibleEnPassant = true;
                 return true;
             }
@@ -216,6 +216,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
                 endPiece == nullptr &&
                 board[end.getLine() + 1][end.getColumn()] == nullptr
             ) {
+                cout << "here" << endl;
                 possibleEnPassant = true;
                 return true;
             }
@@ -658,20 +659,105 @@ bool Board::checkCheck(bool isWhitePlaying) {
 }
 
 bool Board::checkCheckmate(bool isWhitePlaying) {
-    // check if the king can move to a safe square
-    // string kingPosition;
-    // for (int i = 0; i < 8; i++) {
-    //     for (int j = 0; j < 8; j++) {
-    //         if (board[i][j] != nullptr && board[i][j]->getPsymb() == 'K' && board[i][j]->getColor() == (isWhitePlaying ? Color::WHITE : Color::BLACK)) {
-    //             kingPosition = board[i][j]->getPosition();
-    //         }   
-    //     }
-    // }
+    // get the king position
+    string kingPosition;
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            if (board[i][j] != nullptr && board[i][j]->getPsymb() == 'K' && board[i][j]->getColor() == (isWhitePlaying ? Color::WHITE : Color::BLACK)) {
+                kingPosition = board[i][j]->getPosition();
+            }   
+        }
+    }
 
-    // Square kingSquare(&kingPosition[0]);
-    // Piece* king = board[kingSquare.getLine()][kingSquare.getColumn()];
+    // get the king square
+    Square kingSquare(&kingPosition[0]);
+    Piece* king = board[kingSquare.getLine()][kingSquare.getColumn()];
 
-    return isWhitePlaying;
+    // check if the king can move around it's position
+    // and see if it's still in check
+    // taking in consideration the limits of the board
+    for (int i = -1; i <= 1; i++) {
+        for (int j = -1; j <= 1; j++) {
+            if (
+                (i != 0 || j != 0) &&
+                kingSquare.getLine() + i >= 0 && kingSquare.getLine() + i < 8 &&
+                kingSquare.getColumn() + j >= 0 && kingSquare.getColumn() + j < 8 &&
+                (board[kingSquare.getLine() + i][kingSquare.getColumn() + j] == nullptr ||
+                board[kingSquare.getLine() + i][kingSquare.getColumn() + j]->getColor() != king->getColor())
+            ) {
+                // try to move the king
+                Piece* endPiece = board[kingSquare.getLine() + i][kingSquare.getColumn() + j];
+
+                board[kingSquare.getLine() + i][kingSquare.getColumn() + j] = king;
+                string endPosition = string(1, 'a' + kingSquare.getColumn() + j) + to_string(kingSquare.getLine() + i + 1);
+                board[kingSquare.getLine() + i][kingSquare.getColumn() + j]->setPosition(endPosition);
+                board[kingSquare.getLine()][kingSquare.getColumn()] = nullptr;
+
+                if (!checkCheck(isWhitePlaying)) {
+                    board[kingSquare.getLine()][kingSquare.getColumn()] = king;
+                    board[kingSquare.getLine() + i][kingSquare.getColumn() + j] = endPiece;
+                    board[kingSquare.getLine() + i][kingSquare.getColumn() + j]->setPosition(endPiece == nullptr ? "" : endPiece->getPosition());
+                    return false;
+                }
+
+                board[kingSquare.getLine()][kingSquare.getColumn()] = king;
+                board[kingSquare.getLine() + i][kingSquare.getColumn() + j] = endPiece;
+                if (endPiece != nullptr) {
+                    board[kingSquare.getLine() + i][kingSquare.getColumn() + j]->setPosition(endPiece->getPosition());
+                }
+            }
+        }
+    }
+
+    // check if any piece can move to protect the king
+    // and see if the king is still in check
+    bool saveEnPassant = possibleEnPassant;
+
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            // find a piece of the same color
+            if (
+                board[i][j] != nullptr &&
+                board[i][j]->getColor() == (isWhitePlaying ? Color::WHITE : Color::BLACK) &&
+                board[i][j]->getPsymb() != 'K'
+            ) {
+                // verify if a possible move exists
+                for (int k = 0; k < 8; k++) {
+                    for (int l = 0; l < 8; l++) {
+                        string startPosition = string(1, 'a' + j) + to_string(i + 1);
+                        string endPosition = string(1, 'a' + l) + to_string(k + 1);
+                        if (checkMove(board[i][j], Square(&startPosition[0]), Square(&endPosition[0]))) {
+                            // try to move the piece
+                            Piece* endPiece = board[k][l];
+
+                            board[k][l] = board[i][j];
+                            board[k][l]->setPosition(endPosition);
+                            board[i][j] = nullptr;
+
+                            if (!checkCheck(isWhitePlaying)) {
+                                board[i][j] = board[k][l];
+                                board[k][l] = endPiece;
+                                if (endPiece != nullptr) {
+                                    board[k][l]->setPosition(endPiece->getPosition());
+                                }
+                                possibleEnPassant = saveEnPassant;
+                                return false;
+                            }
+
+                            board[i][j] = board[k][l];
+                            board[k][l] = endPiece;
+                            if (endPiece != nullptr) {
+                                board[k][l]->setPosition(endPiece->getPosition());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    return true;
 }
 
 bool Board::validMove(string input, bool isWhitePlaying) {
@@ -739,6 +825,19 @@ bool Board::validMove(string input, bool isWhitePlaying) {
 }
 
 bool Board::validKingSideCastling(bool isWhitePlaying) {
+    // verify if the king and the rook are in position
+    if (
+        board[isWhitePlaying ? 0 : 7][4] == nullptr ||
+        board[isWhitePlaying ? 0 : 7][7] == nullptr ||
+        board[isWhitePlaying ? 0 : 7][4]->getPsymb() != 'K' ||
+        board[isWhitePlaying ? 0 : 7][7]->getPsymb() != 'R'
+    ) {
+        cout << red << bold;
+        cout << "🚫 Le roi ou la tour n'est pas en position." << endl;
+        cout << reset;
+        return false;
+    }
+
     // find the king and the rook positions
     Square kingSquare(&board[isWhitePlaying ? 0 : 7][4]->getPosition()[0]);
     Square rookSquare(&board[isWhitePlaying ? 0 : 7][7]->getPosition()[0]);
@@ -932,6 +1031,7 @@ void Board::startGame() {
             if (correctMovementPattern(input)) {
                 // save the possible en passant before valid move modifies it
                 bool savePossibleEnPassant = possibleEnPassant;
+                cout << savePossibleEnPassant << endl;
 
                 if (!validMove(input, isWhitePlaying))
                     continue;
@@ -1037,9 +1137,25 @@ void Board::startGame() {
 
             // check if the other player is in check
             if (checkCheck(!isWhitePlaying)) {
-                cout << red << bold;
-                cout << "👑 Ce mouvement met le roi " << (!isWhitePlaying ? "blanc" : "noir") << " en échec." << endl;
-                cout << reset;
+                if (checkCheckmate(!isWhitePlaying)) {
+                    cout << red << bold;
+                    cout << "👑 Échec et mat pour les " << (!isWhitePlaying ? "blancs" : "noirs")<< endl;
+                    cout << reset;
+
+                    isPlaying = false;
+                    if (isWhitePlaying) {
+                        whiteWin = true;
+                    } else {
+                        blackWin = true;
+                    }
+
+                    continue;
+
+                } else {
+                    cout << red << bold;
+                    cout << "⚔️ Ce mouvement met le roi " << (!isWhitePlaying ? "blanc" : "noir") << " en échec." << endl;
+                    cout << reset;
+                }
             }
         
             isWhitePlaying = !isWhitePlaying;
