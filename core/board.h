@@ -31,6 +31,8 @@ private:
     bool isCheckmate = false;
     bool whiteWin = false;
     bool blackWin = false;
+    bool possibleEnPassant = false;
+    string enPassantSquare = "";
 public:
     Board() :
         board(8, vector<Piece*>(8))
@@ -215,6 +217,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
                 endPiece == nullptr &&
                 board[end.getLine() - 1][end.getColumn()] == nullptr
             ) {
+                possibleEnPassant = true;
                 return true;
             }
         } else {
@@ -228,7 +231,18 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
                 return true;
             }
 
-            // pawn is capturing a piece using en passant move -> TODO
+            // pawn is capturing a piece using en passant move
+            if (
+                possibleEnPassant &&
+                endPiece == nullptr &&
+                end.getLine() == start.getLine() + 1 &&
+                abs(end.getColumn() - start.getColumn()) == 1 &&
+                board[start.getLine()][end.getColumn()]->getPsymb() == 'P' &&
+                board[start.getLine()][end.getColumn()]->getColor() != piece->getColor()
+            ) {
+                return true;
+            }
+
         }
 
         return false;
@@ -252,6 +266,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
                 endPiece == nullptr &&
                 board[end.getLine() + 1][end.getColumn()] == nullptr
             ) {
+                possibleEnPassant = true;
                 return true;
             }
         } else {
@@ -265,7 +280,17 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
                 return true;
             }
 
-            // pawn is capturing a piece using en passant move -> TODO
+            // pawn is capturing a piece using en passant move
+            if (
+                possibleEnPassant &&
+                endPiece == nullptr &&
+                end.getLine() == start.getLine() - 1 &&
+                abs(end.getColumn() - start.getColumn()) == 1 &&
+                board[start.getLine()][end.getColumn()]->getPsymb() == 'P' &&
+                board[start.getLine()][end.getColumn()]->getColor() != piece->getColor()
+            ) {
+                return true;
+            }
         }
 
         return false;
@@ -937,6 +962,9 @@ void Board::startGame() {
             return;
         } else {
             if (correctMovementPattern(input)) {
+                // save the possible en passant before valid move modifies it
+                bool savePossibleEnPassant = possibleEnPassant;
+
                 if (!validMove(input, isWhitePlaying))
                     continue;
 
@@ -947,6 +975,38 @@ void Board::startGame() {
                 board[start.getLine()][start.getColumn()] = nullptr;
                 board[end.getLine()][end.getColumn()]->setPosition(end.toString());
                 board[end.getLine()][end.getColumn()]->setHasMoved();
+
+                // Promotion
+                if (board[end.getLine()][end.getColumn()]->getPsymb() == 'P' && end.getLine() == (isWhitePlaying ? 7 : 0)) {
+                    cout << "Promotion de pion: ";
+                    cout << "Choisissez la pièce de promotion (Q, R, B, N): ";
+                    string promotion;
+                    cin >> promotion;
+                    if (promotion == "Q") {
+                        board[end.getLine()][end.getColumn()] = new Queen(isWhitePlaying ? Color::WHITE : Color::BLACK, 0, end.toString());
+                    } else if (promotion == "R") {
+                        board[end.getLine()][end.getColumn()] = new Rook(isWhitePlaying ? Color::WHITE : Color::BLACK, 0, end.toString());
+                    } else if (promotion == "B") {
+                        board[end.getLine()][end.getColumn()] = new Bishop(isWhitePlaying ? Color::WHITE : Color::BLACK, 0, end.toString());
+                    } else if (promotion == "N") {
+                        board[end.getLine()][end.getColumn()] = new Knight(isWhitePlaying ? Color::WHITE : Color::BLACK, 0, end.toString());
+                    }
+                }
+
+                // handle en passant
+                if (savePossibleEnPassant) {
+                    if (
+                        board[end.getLine()][end.getColumn()]->getPsymb() == 'P' &&
+                        abs(end.getLine() - start.getLine()) == 1 &&
+                        abs(end.getColumn() - start.getColumn()) == 1
+                    ) {
+                        cout << "Prise en passant effectuée." << endl;
+                        board[start.getLine()][end.getColumn()] = nullptr;
+                    }
+
+                    possibleEnPassant = false;
+                }
+
             } else if (correctKingsideCastlingPattern(input)) {
                 if (!validKingSideCastling(isWhitePlaying))
                     continue;

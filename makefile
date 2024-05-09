@@ -18,24 +18,24 @@ compile:
 	clear
 	$(CXX) $(CXXFLAGS) $(SRC_DIR)/echecs.cpp -o $(EXECUTABLE_SRC)
 
-# Exécution avec l'entrée depuis berger.txt
-run_berger:
-	clear
-	cat $(TEST_DIR)/perso/berger.txt | ./$(EXECUTABLE_SRC)
-
 # Exécution
 run: compile
-	clear
 	./$(EXECUTABLE_SRC)
 
 # Compilation et exécution des tests
 test_1: compile
-	clear
 	cd $(TEST_DIR) && ./test-level.sh 1 && cd ..
 
 test_2: compile
-	clear
 	cd $(TEST_DIR) && ./test-level.sh 2 && cd ..
+
+test_3: compile
+	cd $(TEST_DIR) && ./test-level.sh 3 && cd ..
+
+test_4: compile
+	cd $(TEST_DIR) && ./test-level.sh 4 && cd ..
+
+tests: test_1 test_2 test_3
 
 # Nettoyage
 clean:
