@@ -23,6 +23,10 @@ public:
     string toString() const;
 };
 
+// ------------------------------------------------
+//              PARENT CLASS PIECE
+// ------------------------------------------------
+
 class Piece {
 private:
     string name;
@@ -40,6 +44,10 @@ public:
         position(position)
     {}
 
+    // ------------------------------------------------
+    //                 GETTERS & SETTERS
+    // ------------------------------------------------
+
     string getIcon() const;
 
     char getPsymb() const;
@@ -48,12 +56,16 @@ public:
 
     string getPosition() const;
 
-    void setPosition(string position);
-
     bool getHasMoved() const;
+
+    void setPosition(string position);
 
     void setHasMoved();
 };
+
+// ------------------------------------------------
+//                PIECE CLASSES
+// ------------------------------------------------
 
 class Pawn : public Piece {
 public:

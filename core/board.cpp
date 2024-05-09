@@ -1,5 +1,9 @@
 #include "board.h"
 
+// ------------------------------------------------
+//          PATTERN MATCHING FUNCTIONS
+// ------------------------------------------------
+
 bool correctMovementPattern(string const & cmd) {
     regex mouvementPattern("[a-h][1-8][a-h][1-8]");
     return regex_match(cmd, mouvementPattern);
@@ -15,9 +19,670 @@ bool correctQueensideCastlingPattern(string const & cmd) {
     return regex_match(cmd, queensideCastlingPattern);
 }
 
-// ----------------------------
-//           BOARD
-// ----------------------------
+// ------------------------------------------------
+//                 MOVE PIECES
+// ------------------------------------------------
+
+bool Board::checkPawnMove(Piece* pawn, Piece* endPiece, Square start, Square end) {
+    // ----- WHITE PAWN LOGIC -----
+    if (pawn->getColor() == Color::WHITE) {
+        if (start.getColumn() == end.getColumn()) {
+            // pawn is moving forward by one square
+            if (
+                end.getLine() == start.getLine() + 1 &&
+                endPiece == nullptr
+            ) {
+                return true;
+            }
+
+            // pawn is moving forward by two squares from the initial position
+            if (
+                start.getLine() + 1 == 2 &&
+                end.getLine() == start.getLine() + 2 &&
+                endPiece == nullptr &&
+                board[end.getLine() - 1][end.getColumn()] == nullptr
+            ) {
+                cout << "here" << endl;
+                possibleEnPassant = true;
+                return true;
+            }
+        } else {
+            // pawn is capturing a piece
+            if (
+                endPiece != nullptr &&
+                end.getLine() == start.getLine() + 1 &&
+                abs(end.getColumn() - start.getColumn()) == 1 &&
+                endPiece->getColor() != pawn->getColor()
+            ) {
+                return true;
+            }
+
+            // pawn is capturing a piece using en passant move
+            if (
+                possibleEnPassant &&
+                endPiece == nullptr &&
+                end.getLine() == start.getLine() + 1 &&
+                abs(end.getColumn() - start.getColumn()) == 1 &&
+                board[start.getLine()][end.getColumn()] != nullptr &&
+                board[start.getLine()][end.getColumn()]->getPsymb() == 'P' &&
+                board[start.getLine()][end.getColumn()]->getColor() != pawn->getColor()
+            ) {
+                return true;
+            }
+
+        }
+
+        return false;
+    } 
+
+    // ----- BLACK PAWN LOGIC -----
+
+    if (start.getColumn() == end.getColumn()) {
+        // pawn is moving forward by one square
+        if (
+            end.getLine() == start.getLine() - 1 &&
+            endPiece == nullptr
+        ) {
+            return true;
+        }
+
+        // pawn is moving forward by two squares from the initial position
+        if (
+            start.getLine() + 1 == 7 &&
+            end.getLine() == start.getLine() - 2 &&
+            endPiece == nullptr &&
+            board[end.getLine() + 1][end.getColumn()] == nullptr
+        ) {
+            cout << "here" << endl;
+            possibleEnPassant = true;
+            return true;
+        }
+    } else {
+        // pawn is capturing a piece
+        if (
+            endPiece != nullptr &&
+            end.getLine() == start.getLine() - 1 &&
+            abs(end.getColumn() - start.getColumn()) == 1 &&
+            endPiece->getColor() != pawn->getColor()
+        ) {
+            return true;
+        }
+
+        // pawn is capturing a piece using en passant move
+        if (
+            possibleEnPassant &&
+            endPiece == nullptr &&
+            end.getLine() == start.getLine() - 1 &&
+            abs(end.getColumn() - start.getColumn()) == 1 &&
+            board[start.getLine()][end.getColumn()] != nullptr &&
+            board[start.getLine()][end.getColumn()]->getPsymb() == 'P' &&
+            board[start.getLine()][end.getColumn()]->getColor() != pawn->getColor()
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool Board::checkRookMove(Piece* rook, Piece* endPiece, Square start, Square end) {
+    // rook is moving vertically
+    if (start.getColumn() == end.getColumn()) {
+        // rook is moving up
+        if (end.getLine() > start.getLine()) {
+            for (int i = start.getLine() + 1; i < end.getLine(); i++) {
+                if (board[i][end.getColumn()] != nullptr) {
+                    return false;
+                }
+            }
+
+            if (
+                endPiece == nullptr ||
+                endPiece->getColor() != rook->getColor()
+            ) {
+                return true;
+            }
+
+            return false;
+        }
+
+        // rook is moving down
+        if (end.getLine() < start.getLine()) {
+            for (int i = start.getLine() - 1; i > end.getLine(); i--) {
+                if (board[i][end.getColumn()] != nullptr) {
+                    return false;
+                }
+            }
+
+            if (
+                endPiece == nullptr ||
+                endPiece->getColor() != rook->getColor()
+            ) {
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    // rook is moving horizontally
+    if (start.getLine() == end.getLine()) {
+        // rook is moving right
+        if (end.getColumn() > start.getColumn()) {
+            for (int i = start.getColumn() + 1; i < end.getColumn(); i++) {
+                if (board[end.getLine()][i] != nullptr) {
+                    return false;
+                }
+            }
+
+            if (
+                endPiece == nullptr ||
+                endPiece->getColor() != rook->getColor()
+            ) {
+                return true;
+            }
+
+            return false;
+        }
+
+        // rook is moving left
+        if (end.getColumn() < start.getColumn()) {
+            for (int i = start.getColumn() - 1; i > end.getColumn(); i--) {
+                if (board[end.getLine()][i] != nullptr) {
+                    return false;
+                }
+            }
+
+            if (
+                endPiece == nullptr ||
+                endPiece->getColor() != rook->getColor()
+            ) {
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    return false;
+}
+
+bool Board::checkKnightMove(Piece* knight, Piece* endPiece, Square start, Square end) {
+    if (
+        (abs(end.getLine() - start.getLine()) == 2 && abs(end.getColumn() - start.getColumn()) == 1) ||
+        (abs(end.getLine() - start.getLine()) == 1 && abs(end.getColumn() - start.getColumn()) == 2)
+    ) {
+        if (
+            endPiece == nullptr ||
+            endPiece->getColor() != knight->getColor()
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    return false;
+}
+
+bool Board::checkBishopMove(Piece* bishop, Piece* endPiece, Square start, Square end) {
+    // bishop is moving diagonally
+    if (abs(end.getLine() - start.getLine()) == abs(end.getColumn() - start.getColumn())) {
+        // bishop is moving up-right
+        if (end.getLine() > start.getLine() && end.getColumn() > start.getColumn()) {
+            for (int i = 1; i < end.getLine() - start.getLine(); i++) {
+                if (board[start.getLine() + i][start.getColumn() + i] != nullptr) {
+                    return false;
+                }
+            }
+
+            if (
+                endPiece == nullptr ||
+                endPiece->getColor() != bishop->getColor()
+            ) {
+                return true;
+            }
+
+            return false;
+        }
+
+        // bishop is moving up-left
+        if (end.getLine() > start.getLine() && end.getColumn() < start.getColumn()) {
+            for (int i = 1; i < end.getLine() - start.getLine(); i++) {
+                if (board[start.getLine() + i][start.getColumn() - i] != nullptr) {
+                    return false;
+                }
+            }
+
+            if (
+                endPiece == nullptr ||
+                endPiece->getColor() != bishop->getColor()
+            ) {
+                return true;
+            }
+
+            return false;
+        }
+
+        // bishop is moving down-right
+        if (end.getLine() < start.getLine() && end.getColumn() > start.getColumn()) {
+            for (int i = 1; i < start.getLine() - end.getLine(); i++) {
+                if (board[start.getLine() - i][start.getColumn() + i] != nullptr) {
+                    return false;
+                }
+            }
+
+            if (
+                endPiece == nullptr ||
+                endPiece->getColor() != bishop->getColor()
+            ) {
+                return true;
+            }
+
+            return false;
+        }
+
+        // bishop is moving down-left
+        if (end.getLine() < start.getLine() && end.getColumn() < start.getColumn()) {
+            for (int i = 1; i < start.getLine() - end.getLine(); i++) {
+                if (board[start.getLine() - i][start.getColumn() - i] != nullptr) {
+                    return false;
+                }
+            }
+
+            if (
+                endPiece == nullptr ||
+                endPiece->getColor() != bishop->getColor()
+            ) {
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    return false;
+}
+
+bool Board::checkQueenMove(Piece* queen, Piece* endPiece, Square start, Square end) {
+    // queen is moving vertically
+    if (start.getColumn() == end.getColumn()) {
+        // queen is moving up
+        if (end.getLine() > start.getLine()) {
+            for (int i = start.getLine() + 1; i < end.getLine(); i++) {
+                if (board[i][end.getColumn()] != nullptr) {
+                    return false;
+                }
+            }
+
+            if (
+                endPiece == nullptr ||
+                endPiece->getColor() != queen->getColor()
+            ) {
+                return true;
+            }
+
+            return false;
+        }
+
+        // queen is moving down
+        if (end.getLine() < start.getLine()) {
+            for (int i = start.getLine() - 1; i > end.getLine(); i--) {
+                if (board[i][end.getColumn()] != nullptr) {
+                    return false;
+                }
+            }
+
+            if (
+                endPiece == nullptr ||
+                endPiece->getColor() != queen->getColor()
+            ) {
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    // queen is moving horizontally
+    if (start.getLine() == end.getLine()) {
+        // queen is moving right
+        if (end.getColumn() > start.getColumn()) {
+            for (int i = start.getColumn() + 1; i < end.getColumn(); i++) {
+                if (board[end.getLine()][i] != nullptr) {
+                    return false;
+                }
+            }
+
+            if (
+                endPiece == nullptr ||
+                endPiece->getColor() != queen->getColor()
+            ) {
+                return true;
+            }
+
+            return false;
+        }
+
+        // queen is moving left
+        if (end.getColumn() < start.getColumn()) {
+            for (int i = start.getColumn() - 1; i > end.getColumn(); i--) {
+                if (board[end.getLine()][i] != nullptr) {
+                    return false;
+                }
+            }
+
+            if (
+                endPiece == nullptr ||
+                endPiece->getColor() != queen->getColor()
+            ) {
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    // queen is moving diagonally
+    if (abs(end.getLine() - start.getLine()) == abs(end.getColumn() - start.getColumn())) {
+        // queen is moving up-right
+        if (end.getLine() > start.getLine() && end.getColumn() > start.getColumn()) {
+            for (int i = 1; i < end.getLine() - start.getLine(); i++) {
+                if (board[start.getLine() + i][start.getColumn() + i] != nullptr) {
+                    return false;
+                }
+            }
+
+            if (
+                endPiece == nullptr ||
+                endPiece->getColor() != queen->getColor()
+            ) {
+                return true;
+            }
+
+            return false;
+        }
+
+        // queen is moving up-left
+        if (end.getLine() > start.getLine() && end.getColumn() < start.getColumn()) {
+            for (int i = 1; i < end.getLine() - start.getLine(); i++) {
+                if (board[start.getLine() + i][start.getColumn() - i] != nullptr) {
+                    return false;
+                }
+            }
+
+            if (
+                endPiece == nullptr ||
+                endPiece->getColor() != queen->getColor()
+            ) {
+                return true;
+            }
+
+            return false;
+        }
+
+        // queen is moving down-right
+        if (end.getLine() < start.getLine() && end.getColumn() > start.getColumn()) {
+            for (int i = 1; i < start.getLine() - end.getLine(); i++) {
+                if (board[start.getLine() - i][start.getColumn() + i] != nullptr) {
+                    return false;
+                }
+            }
+
+            if (
+                endPiece == nullptr ||
+                endPiece->getColor() != queen->getColor()
+            ) {
+                return true;
+            }
+
+            return false;
+        }
+
+        // queen is moving down-left
+        if (end.getLine() < start.getLine() && end.getColumn() < start.getColumn()) {
+            for (int i = 1; i < start.getLine() - end.getLine(); i++) {
+                if (board[start.getLine() - i][start.getColumn() - i] != nullptr) {
+                    return false;
+                }
+            }
+
+            if (
+                endPiece == nullptr ||
+                endPiece->getColor() != queen->getColor()
+            ) {
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    return false;
+}
+
+bool Board::checkKingMove(Piece* king, Piece* endPiece, Square start, Square end) {
+    // king is moving vertically
+    if (abs(end.getLine() - start.getLine()) == 1 && abs(end.getColumn() - start.getColumn()) == 0) {
+        if (
+            endPiece == nullptr ||
+            endPiece->getColor() != king->getColor()
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    // king is moving horizontally
+    if (abs(end.getColumn() - start.getColumn()) == 1 && abs(end.getLine() - start.getLine()) == 0) {
+        if (
+            endPiece == nullptr ||
+            endPiece->getColor() != king->getColor()
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    // king is moving diagonally
+    if (abs(end.getLine() - start.getLine()) == 1 && abs(end.getColumn() - start.getColumn()) == 1) {
+        if (
+            endPiece == nullptr ||
+            endPiece->getColor() != king->getColor()
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    // king is castling kingside -> TODO
+    if (end.getColumn() - start.getColumn() == 2) {
+        return false;
+    }
+
+    // king is castling queenside -> TODO
+    if (start.getColumn() - end.getColumn() == 2) {
+        return false;
+    }
+
+    return false;
+}
+
+bool Board::checkPieceMove(Piece* piece, Square start, Square end) {
+    Piece* endPiece = board[end.getLine()][end.getColumn()];
+
+    // ----- PAWN LOGIC -----
+    if (piece->getPsymb() == 'P')
+        return checkPawnMove(piece, endPiece, start, end);
+
+    // ----- ROOK LOGIC -----
+    if (piece->getPsymb() == 'R')
+        return checkRookMove(piece, endPiece, start, end);
+
+    // ----- KNIGHT LOGIC -----
+    if (piece->getPsymb() == 'N')
+        return checkKnightMove(piece, endPiece, start, end);
+
+    // ----- BISHOP LOGIC -----
+    if (piece->getPsymb() == 'B')
+        return checkBishopMove(piece, endPiece, start, end);
+
+    // ----- QUEEN LOGIC -----
+    if (piece->getPsymb() == 'Q')
+        return checkQueenMove(piece, endPiece, start, end);
+
+    // ----- KING LOGIC -----
+    if (piece->getPsymb() == 'K')
+        return checkKingMove(piece, endPiece, start, end);
+
+    return false;
+}
+
+// ------------------------------------------------
+//               CHECK & CHECKMATE
+// ------------------------------------------------
+
+string Board::findKingPosition(bool isWhitePlaying) {
+    string kingPosition = "";
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            if (board[i][j] != nullptr && board[i][j]->getPsymb() == 'K' && board[i][j]->getColor() == (isWhitePlaying ? Color::WHITE : Color::BLACK)) {
+                kingPosition = board[i][j]->getPosition();
+            }
+        }
+    }
+
+    return kingPosition;
+}
+
+bool Board::isCheck(bool isWhitePlaying) {
+    // get the king position
+    string kingPosition = findKingPosition(isWhitePlaying);
+    
+    // check if the king is in check
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            if (
+                board[i][j] != nullptr &&
+                board[i][j]->getColor() != (isWhitePlaying ? Color::WHITE : Color::BLACK)
+            ) {
+                if (
+                    checkPieceMove(board[i][j], Square(&board[i][j]->getPosition()[0]), Square(&kingPosition[0]))
+                ) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+bool Board::isCheckmate(bool isWhitePlaying) {
+    // get the king position
+    string kingPosition = findKingPosition(isWhitePlaying);
+
+    // get the king square
+    Square kingSquare(&kingPosition[0]);
+    Piece* king = board[kingSquare.getLine()][kingSquare.getColumn()];
+
+    // check if the king can move around it's position
+    // and see if it's still in check
+    // taking in consideration the limits of the board
+    for (int i = -1; i <= 1; i++) {
+        for (int j = -1; j <= 1; j++) {
+            if (
+                (i != 0 || j != 0) &&
+                kingSquare.getLine() + i >= 0 && kingSquare.getLine() + i < 8 &&
+                kingSquare.getColumn() + j >= 0 && kingSquare.getColumn() + j < 8 &&
+                (board[kingSquare.getLine() + i][kingSquare.getColumn() + j] == nullptr ||
+                board[kingSquare.getLine() + i][kingSquare.getColumn() + j]->getColor() != king->getColor())
+            ) {
+                // try to move the king
+                Piece* endPiece = board[kingSquare.getLine() + i][kingSquare.getColumn() + j];
+
+                board[kingSquare.getLine() + i][kingSquare.getColumn() + j] = king;
+                string endPosition = string(1, 'a' + kingSquare.getColumn() + j) + to_string(kingSquare.getLine() + i + 1);
+                board[kingSquare.getLine() + i][kingSquare.getColumn() + j]->setPosition(endPosition);
+                board[kingSquare.getLine()][kingSquare.getColumn()] = nullptr;
+
+                if (!isCheck(isWhitePlaying)) {
+                    board[kingSquare.getLine()][kingSquare.getColumn()] = king;
+                    board[kingSquare.getLine() + i][kingSquare.getColumn() + j] = endPiece;
+                    board[kingSquare.getLine()][kingSquare.getColumn()]->setPosition(kingPosition);
+                    if (endPiece != nullptr) {
+                        board[kingSquare.getLine() + i][kingSquare.getColumn() + j]->setPosition(endPiece->getPosition());
+                    }
+                    return false;
+                }
+
+                board[kingSquare.getLine()][kingSquare.getColumn()] = king;
+                board[kingSquare.getLine() + i][kingSquare.getColumn() + j] = endPiece;
+                if (endPiece != nullptr) {
+                    board[kingSquare.getLine() + i][kingSquare.getColumn() + j]->setPosition(endPiece->getPosition());
+                }
+            }
+        }
+    }
+
+    // check if any piece can move to protect the king
+    // and see if the king is still in check
+    bool saveEnPassant = possibleEnPassant;
+
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            // find a piece of the same color
+            if (
+                board[i][j] != nullptr &&
+                board[i][j]->getColor() == (isWhitePlaying ? Color::WHITE : Color::BLACK) &&
+                board[i][j]->getPsymb() != 'K'
+            ) {
+                // verify if a possible move exists
+                for (int k = 0; k < 8; k++) {
+                    for (int l = 0; l < 8; l++) {
+                        string startPosition = string(1, 'a' + j) + to_string(i + 1);
+                        string endPosition = string(1, 'a' + l) + to_string(k + 1);
+                        if (checkPieceMove(board[i][j], Square(&startPosition[0]), Square(&endPosition[0]))) {
+                            // try to move the piece
+                            Piece* endPiece = board[k][l];
+
+                            board[k][l] = board[i][j];
+                            board[k][l]->setPosition(endPosition);
+                            board[i][j] = nullptr;
+
+                            if (!isCheck(isWhitePlaying)) {
+                                cout << "On peut jouer " << board[k][l]->getPsymb() << (isWhitePlaying ? " blanc" : " noir") 
+                                 << " de " << startPosition << " à " << endPosition << endl;
+                                board[i][j] = board[k][l];
+                                board[k][l] = endPiece;
+                                if (endPiece != nullptr) {
+                                    board[k][l]->setPosition(endPiece->getPosition());
+                                }
+                                possibleEnPassant = saveEnPassant;
+                                return false;
+                            }
+
+                            board[i][j] = board[k][l];
+                            board[k][l] = endPiece;
+                            if (endPiece != nullptr) {
+                                board[k][l]->setPosition(endPiece->getPosition());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+// ------------------------------------------------
+//             GAME INTERACTIONS
+// ------------------------------------------------
 
 void Board::initGame() {
     // ----- position setup for the pieces -----
@@ -144,622 +809,6 @@ string Board::getInput(bool isWhitePlaying) {
     return input;
 }
 
-bool Board::checkMove(Piece* piece, Square start, Square end) {
-    Piece* endPiece = board[end.getLine()][end.getColumn()];
-
-    // ----- WHITE PAWN LOGIC -----
-    if (piece->getPsymb() == 'P' && piece->getColor() == Color::WHITE) {
-        if (start.getColumn() == end.getColumn()) {
-            // pawn is moving forward by one square
-            if (
-                end.getLine() == start.getLine() + 1 &&
-                endPiece == nullptr
-            ) {
-                return true;
-            }
-
-            // pawn is moving forward by two squares from the initial position
-            if (
-                start.getLine() + 1 == 2 &&
-                end.getLine() == start.getLine() + 2 &&
-                endPiece == nullptr &&
-                board[end.getLine() - 1][end.getColumn()] == nullptr
-            ) {
-                cout << "here" << endl;
-                possibleEnPassant = true;
-                return true;
-            }
-        } else {
-            // pawn is capturing a piece
-            if (
-                endPiece != nullptr &&
-                end.getLine() == start.getLine() + 1 &&
-                abs(end.getColumn() - start.getColumn()) == 1 &&
-                endPiece->getColor() != piece->getColor()
-            ) {
-                return true;
-            }
-
-            // pawn is capturing a piece using en passant move
-            if (
-                possibleEnPassant &&
-                endPiece == nullptr &&
-                end.getLine() == start.getLine() + 1 &&
-                abs(end.getColumn() - start.getColumn()) == 1 &&
-                board[start.getLine()][end.getColumn()] != nullptr &&
-                board[start.getLine()][end.getColumn()]->getPsymb() == 'P' &&
-                board[start.getLine()][end.getColumn()]->getColor() != piece->getColor()
-            ) {
-                return true;
-            }
-
-        }
-
-        return false;
-    }
-
-    // ----- BLACK PAWN LOGIC -----
-    if (piece->getPsymb() == 'P' && piece->getColor() == Color::BLACK) {
-        if (start.getColumn() == end.getColumn()) {
-            // pawn is moving forward by one square
-            if (
-                end.getLine() == start.getLine() - 1 &&
-                endPiece == nullptr
-            ) {
-                return true;
-            }
-
-            // pawn is moving forward by two squares from the initial position
-            if (
-                start.getLine() + 1 == 7 &&
-                end.getLine() == start.getLine() - 2 &&
-                endPiece == nullptr &&
-                board[end.getLine() + 1][end.getColumn()] == nullptr
-            ) {
-                cout << "here" << endl;
-                possibleEnPassant = true;
-                return true;
-            }
-        } else {
-            // pawn is capturing a piece
-            if (
-                endPiece != nullptr &&
-                end.getLine() == start.getLine() - 1 &&
-                abs(end.getColumn() - start.getColumn()) == 1 &&
-                endPiece->getColor() != piece->getColor()
-            ) {
-                return true;
-            }
-
-            // pawn is capturing a piece using en passant move
-            if (
-                possibleEnPassant &&
-                endPiece == nullptr &&
-                end.getLine() == start.getLine() - 1 &&
-                abs(end.getColumn() - start.getColumn()) == 1 &&
-                board[start.getLine()][end.getColumn()] != nullptr &&
-                board[start.getLine()][end.getColumn()]->getPsymb() == 'P' &&
-                board[start.getLine()][end.getColumn()]->getColor() != piece->getColor()
-            ) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    // ----- ROOK LOGIC -----
-    if (piece->getPsymb() == 'R') {
-        // rook is moving vertically
-        if (start.getColumn() == end.getColumn()) {
-            // rook is moving up
-            if (end.getLine() > start.getLine()) {
-                for (int i = start.getLine() + 1; i < end.getLine(); i++) {
-                    if (board[i][end.getColumn()] != nullptr) {
-                        return false;
-                    }
-                }
-
-                if (
-                    endPiece == nullptr ||
-                    endPiece->getColor() != piece->getColor()
-                ) {
-                    return true;
-                }
-
-                return false;
-            }
-
-            // rook is moving down
-            if (end.getLine() < start.getLine()) {
-                for (int i = start.getLine() - 1; i > end.getLine(); i--) {
-                    if (board[i][end.getColumn()] != nullptr) {
-                        return false;
-                    }
-                }
-
-                if (
-                    endPiece == nullptr ||
-                    endPiece->getColor() != piece->getColor()
-                ) {
-                    return true;
-                }
-
-                return false;
-            }
-        }
-
-        // rook is moving horizontally
-        if (start.getLine() == end.getLine()) {
-            // rook is moving right
-            if (end.getColumn() > start.getColumn()) {
-                for (int i = start.getColumn() + 1; i < end.getColumn(); i++) {
-                    if (board[end.getLine()][i] != nullptr) {
-                        return false;
-                    }
-                }
-
-                if (
-                    endPiece == nullptr ||
-                    endPiece->getColor() != piece->getColor()
-                ) {
-                    return true;
-                }
-
-                return false;
-            }
-
-            // rook is moving left
-            if (end.getColumn() < start.getColumn()) {
-                for (int i = start.getColumn() - 1; i > end.getColumn(); i--) {
-                    if (board[end.getLine()][i] != nullptr) {
-                        return false;
-                    }
-                }
-
-                if (
-                    endPiece == nullptr ||
-                    endPiece->getColor() != piece->getColor()
-                ) {
-                    return true;
-                }
-
-                return false;
-            }
-        }
-    }
-
-    // ----- KNIGHT LOGIC -----
-    if (piece->getPsymb() == 'N') {
-        if (
-            (abs(end.getLine() - start.getLine()) == 2 && abs(end.getColumn() - start.getColumn()) == 1) ||
-            (abs(end.getLine() - start.getLine()) == 1 && abs(end.getColumn() - start.getColumn()) == 2)
-        ) {
-            if (
-                endPiece == nullptr ||
-                endPiece->getColor() != piece->getColor()
-            ) {
-                return true;
-            }
-
-            return false;
-        }
-        return false;
-    }
-
-    // ----- BISHOP LOGIC -----
-    if (piece->getPsymb() == 'B') {
-        // bishop is moving diagonally
-        if (abs(end.getLine() - start.getLine()) == abs(end.getColumn() - start.getColumn())) {
-            // bishop is moving up-right
-            if (end.getLine() > start.getLine() && end.getColumn() > start.getColumn()) {
-                for (int i = 1; i < end.getLine() - start.getLine(); i++) {
-                    if (board[start.getLine() + i][start.getColumn() + i] != nullptr) {
-                        return false;
-                    }
-                }
-
-                if (
-                    endPiece == nullptr ||
-                    endPiece->getColor() != piece->getColor()
-                ) {
-                    return true;
-                }
-
-                return false;
-            }
-
-            // bishop is moving up-left
-            if (end.getLine() > start.getLine() && end.getColumn() < start.getColumn()) {
-                for (int i = 1; i < end.getLine() - start.getLine(); i++) {
-                    if (board[start.getLine() + i][start.getColumn() - i] != nullptr) {
-                        return false;
-                    }
-                }
-
-                if (
-                    endPiece == nullptr ||
-                    endPiece->getColor() != piece->getColor()
-                ) {
-                    return true;
-                }
-
-                return false;
-            }
-
-            // bishop is moving down-right
-            if (end.getLine() < start.getLine() && end.getColumn() > start.getColumn()) {
-                for (int i = 1; i < start.getLine() - end.getLine(); i++) {
-                    if (board[start.getLine() - i][start.getColumn() + i] != nullptr) {
-                        return false;
-                    }
-                }
-
-                if (
-                    endPiece == nullptr ||
-                    endPiece->getColor() != piece->getColor()
-                ) {
-                    return true;
-                }
-
-                return false;
-            }
-
-            // bishop is moving down-left
-            if (end.getLine() < start.getLine() && end.getColumn() < start.getColumn()) {
-                for (int i = 1; i < start.getLine() - end.getLine(); i++) {
-                    if (board[start.getLine() - i][start.getColumn() - i] != nullptr) {
-                        return false;
-                    }
-                }
-
-                if (
-                    endPiece == nullptr ||
-                    endPiece->getColor() != piece->getColor()
-                ) {
-                    return true;
-                }
-
-                return false;
-            }
-        }
-    }
-
-    // ----- QUEEN LOGIC -----
-    if (piece->getPsymb() == 'Q') {
-        // queen is moving vertically
-        if (start.getColumn() == end.getColumn()) {
-            // queen is moving up
-            if (end.getLine() > start.getLine()) {
-                for (int i = start.getLine() + 1; i < end.getLine(); i++) {
-                    if (board[i][end.getColumn()] != nullptr) {
-                        return false;
-                    }
-                }
-
-                if (
-                    endPiece == nullptr ||
-                    endPiece->getColor() != piece->getColor()
-                ) {
-                    return true;
-                }
-
-                return false;
-            }
-
-            // queen is moving down
-            if (end.getLine() < start.getLine()) {
-                for (int i = start.getLine() - 1; i > end.getLine(); i--) {
-                    if (board[i][end.getColumn()] != nullptr) {
-                        return false;
-                    }
-                }
-
-                if (
-                    endPiece == nullptr ||
-                    endPiece->getColor() != piece->getColor()
-                ) {
-                    return true;
-                }
-
-                return false;
-            }
-        }
-
-        // queen is moving horizontally
-        if (start.getLine() == end.getLine()) {
-            // queen is moving right
-            if (end.getColumn() > start.getColumn()) {
-                for (int i = start.getColumn() + 1; i < end.getColumn(); i++) {
-                    if (board[end.getLine()][i] != nullptr) {
-                        return false;
-                    }
-                }
-
-                if (
-                    endPiece == nullptr ||
-                    endPiece->getColor() != piece->getColor()
-                ) {
-                    return true;
-                }
-
-                return false;
-            }
-
-            // queen is moving left
-            if (end.getColumn() < start.getColumn()) {
-                for (int i = start.getColumn() - 1; i > end.getColumn(); i--) {
-                    if (board[end.getLine()][i] != nullptr) {
-                        return false;
-                    }
-                }
-
-                if (
-                    endPiece == nullptr ||
-                    endPiece->getColor() != piece->getColor()
-                ) {
-                    return true;
-                }
-
-                return false;
-            }
-        }
-
-        // queen is moving diagonally
-        if (abs(end.getLine() - start.getLine()) == abs(end.getColumn() - start.getColumn())) {
-            // queen is moving up-right
-            if (end.getLine() > start.getLine() && end.getColumn() > start.getColumn()) {
-                for (int i = 1; i < end.getLine() - start.getLine(); i++) {
-                    if (board[start.getLine() + i][start.getColumn() + i] != nullptr) {
-                        return false;
-                    }
-                }
-
-                if (
-                    endPiece == nullptr ||
-                    endPiece->getColor() != piece->getColor()
-                ) {
-                    return true;
-                }
-
-                return false;
-            }
-
-            // queen is moving up-left
-            if (end.getLine() > start.getLine() && end.getColumn() < start.getColumn()) {
-                for (int i = 1; i < end.getLine() - start.getLine(); i++) {
-                    if (board[start.getLine() + i][start.getColumn() - i] != nullptr) {
-                        return false;
-                    }
-                }
-
-                if (
-                    endPiece == nullptr ||
-                    endPiece->getColor() != piece->getColor()
-                ) {
-                    return true;
-                }
-
-                return false;
-            }
-
-            // queen is moving down-right
-            if (end.getLine() < start.getLine() && end.getColumn() > start.getColumn()) {
-                for (int i = 1; i < start.getLine() - end.getLine(); i++) {
-                    if (board[start.getLine() - i][start.getColumn() + i] != nullptr) {
-                        return false;
-                    }
-                }
-
-                if (
-                    endPiece == nullptr ||
-                    endPiece->getColor() != piece->getColor()
-                ) {
-                    return true;
-                }
-
-                return false;
-            }
-
-            // queen is moving down-left
-            if (end.getLine() < start.getLine() && end.getColumn() < start.getColumn()) {
-                for (int i = 1; i < start.getLine() - end.getLine(); i++) {
-                    if (board[start.getLine() - i][start.getColumn() - i] != nullptr) {
-                        return false;
-                    }
-                }
-
-                if (
-                    endPiece == nullptr ||
-                    endPiece->getColor() != piece->getColor()
-                ) {
-                    return true;
-                }
-
-                return false;
-            }
-        }
-    }
-
-    // ----- KING LOGIC -----
-    if (piece->getPsymb() == 'K') {
-        // king is moving vertically
-        if (abs(end.getLine() - start.getLine()) == 1 && abs(end.getColumn() - start.getColumn()) == 0) {
-            if (
-                endPiece == nullptr ||
-                endPiece->getColor() != piece->getColor()
-            ) {
-                return true;
-            }
-
-            return false;
-        }
-
-        // king is moving horizontally
-        if (abs(end.getColumn() - start.getColumn()) == 1 && abs(end.getLine() - start.getLine()) == 0) {
-            if (
-                endPiece == nullptr ||
-                endPiece->getColor() != piece->getColor()
-            ) {
-                return true;
-            }
-
-            return false;
-        }
-
-        // king is moving diagonally
-        if (abs(end.getLine() - start.getLine()) == 1 && abs(end.getColumn() - start.getColumn()) == 1) {
-            if (
-                endPiece == nullptr ||
-                endPiece->getColor() != piece->getColor()
-            ) {
-                return true;
-            }
-
-            return false;
-        }
-
-        // king is castling kingside -> TODO
-        if (end.getColumn() - start.getColumn() == 2) {
-            return false;
-        }
-
-        // king is castling queenside -> TODO
-        if (start.getColumn() - end.getColumn() == 2) {
-            return false;
-        }
-    }
-
-    return false;
-}
-
-bool Board::checkCheck(bool isWhitePlaying) {
-    // get the king position
-    string kingPosition;
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            if (board[i][j] != nullptr && board[i][j]->getPsymb() == 'K' && board[i][j]->getColor() == (isWhitePlaying ? Color::WHITE : Color::BLACK)) {
-                kingPosition = board[i][j]->getPosition();
-            }   
-        }
-    }
-
-    // check if the king is in check
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            if (board[i][j] != nullptr && board[i][j]->getColor() != (isWhitePlaying ? Color::WHITE : Color::BLACK)) {
-                if (checkMove(board[i][j], Square(&board[i][j]->getPosition()[0]), Square(&kingPosition[0]))) {
-                    return true;
-                }
-            }
-        }
-    }
-
-    return false;
-}
-
-bool Board::checkCheckmate(bool isWhitePlaying) {
-    // get the king position
-    string kingPosition;
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            if (board[i][j] != nullptr && board[i][j]->getPsymb() == 'K' && board[i][j]->getColor() == (isWhitePlaying ? Color::WHITE : Color::BLACK)) {
-                kingPosition = board[i][j]->getPosition();
-            }   
-        }
-    }
-
-    // get the king square
-    Square kingSquare(&kingPosition[0]);
-    Piece* king = board[kingSquare.getLine()][kingSquare.getColumn()];
-
-    // check if the king can move around it's position
-    // and see if it's still in check
-    // taking in consideration the limits of the board
-    for (int i = -1; i <= 1; i++) {
-        for (int j = -1; j <= 1; j++) {
-            if (
-                (i != 0 || j != 0) &&
-                kingSquare.getLine() + i >= 0 && kingSquare.getLine() + i < 8 &&
-                kingSquare.getColumn() + j >= 0 && kingSquare.getColumn() + j < 8 &&
-                (board[kingSquare.getLine() + i][kingSquare.getColumn() + j] == nullptr ||
-                board[kingSquare.getLine() + i][kingSquare.getColumn() + j]->getColor() != king->getColor())
-            ) {
-                // try to move the king
-                Piece* endPiece = board[kingSquare.getLine() + i][kingSquare.getColumn() + j];
-
-                board[kingSquare.getLine() + i][kingSquare.getColumn() + j] = king;
-                string endPosition = string(1, 'a' + kingSquare.getColumn() + j) + to_string(kingSquare.getLine() + i + 1);
-                board[kingSquare.getLine() + i][kingSquare.getColumn() + j]->setPosition(endPosition);
-                board[kingSquare.getLine()][kingSquare.getColumn()] = nullptr;
-
-                if (!checkCheck(isWhitePlaying)) {
-                    board[kingSquare.getLine()][kingSquare.getColumn()] = king;
-                    board[kingSquare.getLine() + i][kingSquare.getColumn() + j] = endPiece;
-                    board[kingSquare.getLine() + i][kingSquare.getColumn() + j]->setPosition(endPiece == nullptr ? "" : endPiece->getPosition());
-                    return false;
-                }
-
-                board[kingSquare.getLine()][kingSquare.getColumn()] = king;
-                board[kingSquare.getLine() + i][kingSquare.getColumn() + j] = endPiece;
-                if (endPiece != nullptr) {
-                    board[kingSquare.getLine() + i][kingSquare.getColumn() + j]->setPosition(endPiece->getPosition());
-                }
-            }
-        }
-    }
-
-    // check if any piece can move to protect the king
-    // and see if the king is still in check
-    bool saveEnPassant = possibleEnPassant;
-
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            // find a piece of the same color
-            if (
-                board[i][j] != nullptr &&
-                board[i][j]->getColor() == (isWhitePlaying ? Color::WHITE : Color::BLACK) &&
-                board[i][j]->getPsymb() != 'K'
-            ) {
-                // verify if a possible move exists
-                for (int k = 0; k < 8; k++) {
-                    for (int l = 0; l < 8; l++) {
-                        string startPosition = string(1, 'a' + j) + to_string(i + 1);
-                        string endPosition = string(1, 'a' + l) + to_string(k + 1);
-                        if (checkMove(board[i][j], Square(&startPosition[0]), Square(&endPosition[0]))) {
-                            // try to move the piece
-                            Piece* endPiece = board[k][l];
-
-                            board[k][l] = board[i][j];
-                            board[k][l]->setPosition(endPosition);
-                            board[i][j] = nullptr;
-
-                            if (!checkCheck(isWhitePlaying)) {
-                                board[i][j] = board[k][l];
-                                board[k][l] = endPiece;
-                                if (endPiece != nullptr) {
-                                    board[k][l]->setPosition(endPiece->getPosition());
-                                }
-                                possibleEnPassant = saveEnPassant;
-                                return false;
-                            }
-
-                            board[i][j] = board[k][l];
-                            board[k][l] = endPiece;
-                            if (endPiece != nullptr) {
-                                board[k][l]->setPosition(endPiece->getPosition());
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-
-    return true;
-}
-
 bool Board::validMove(string input, bool isWhitePlaying) {
     Square start(&input[0]);
     Square end(&input[2]);
@@ -792,7 +841,7 @@ bool Board::validMove(string input, bool isWhitePlaying) {
     }
 
     // check if the Piece can move to the end position
-    if (!checkMove(piece, start, end)) {
+    if (!checkPieceMove(piece, start, end)) {
         cout << red << bold;
         cout << "🚫 Ce mouvement n'est pas valide." << endl;
         cout << reset;
@@ -808,7 +857,7 @@ bool Board::validMove(string input, bool isWhitePlaying) {
     board[end.getLine()][end.getColumn()]->setPosition(end.toString());
     board[start.getLine()][start.getColumn()] = nullptr;
 
-    if (checkCheck(isWhitePlaying)) {
+    if (isCheck(isWhitePlaying)) {
         cout << red << bold;
         cout << "🚫 Le roi " << (isWhitePlaying ? "blanc" : "noir") << " est en échec." << endl;
         cout << reset;
@@ -866,7 +915,7 @@ bool Board::validKingSideCastling(bool isWhitePlaying) {
     }
 
     // check if the king is not in check
-    if (checkCheck(isWhitePlaying)) {
+    if (isCheck(isWhitePlaying)) {
         cout << red << bold;
         cout << "🚫 Le roi " << (isWhitePlaying ? "blanc" : "noir") << " est en échec." << endl;
         cout << reset;
@@ -882,7 +931,7 @@ bool Board::validKingSideCastling(bool isWhitePlaying) {
     board[kingSquare.getLine()][kingSquare.getColumn()] = nullptr;
     board[kingSquare.getLine()][kingSquare.getColumn() + 1]->setPosition((isWhitePlaying? "f1" : "f8"));
 
-    if (checkCheck(isWhitePlaying)) {
+    if (isCheck(isWhitePlaying)) {
         cout << red << bold;
         cout << "🚫 Une des cases du roc est attaquée" << endl;
         cout << reset;
@@ -897,7 +946,7 @@ bool Board::validKingSideCastling(bool isWhitePlaying) {
     board[kingSquare.getLine()][kingSquare.getColumn() + 1] = nullptr;
     board[kingSquare.getLine()][kingSquare.getColumn() + 2]->setPosition((isWhitePlaying? "g1" : "g8"));
 
-    if (checkCheck(isWhitePlaying)) {
+    if (isCheck(isWhitePlaying)) {
         cout << red << bold;
         cout << "🚫 Une des cases du roc est attaquée" << endl;
         cout << reset;
@@ -945,7 +994,7 @@ bool Board::validQueenSideCastling(bool isWhitePlaying) {
     }
 
     // check if the king is not in check
-    if (checkCheck(isWhitePlaying)) {
+    if (isCheck(isWhitePlaying)) {
         cout << red << bold;
         cout << "🚫 Le roi " << (isWhitePlaying ? "blanc" : "noir") << " est en échec." << endl;
         cout << reset;
@@ -961,7 +1010,7 @@ bool Board::validQueenSideCastling(bool isWhitePlaying) {
     board[kingSquare.getLine()][kingSquare.getColumn()] = nullptr;
     board[kingSquare.getLine()][kingSquare.getColumn() - 1]->setPosition((isWhitePlaying? "d1" : "d8"));
 
-    if (checkCheck(isWhitePlaying)) {
+    if (isCheck(isWhitePlaying)) {
         cout << red << bold;
         cout << "🚫 Une des cases du roc est attaquée" << endl;
         cout << reset;
@@ -976,7 +1025,7 @@ bool Board::validQueenSideCastling(bool isWhitePlaying) {
     board[kingSquare.getLine()][kingSquare.getColumn() - 1] = nullptr;
     board[kingSquare.getLine()][kingSquare.getColumn() - 2]->setPosition((isWhitePlaying? "c1" : "c8"));
 
-    if (checkCheck(isWhitePlaying)) {
+    if (isCheck(isWhitePlaying)) {
         cout << red << bold;
         cout << "🚫 Une des cases du roc est attaquée" << endl;
         cout << reset;
@@ -1135,8 +1184,8 @@ void Board::startGame() {
             cout << reset;
 
             // check if the other player is in check
-            if (checkCheck(!isWhitePlaying)) {
-                if (checkCheckmate(!isWhitePlaying)) {
+            if (isCheck(!isWhitePlaying)) {
+                if (isCheckmate(!isWhitePlaying)) {
                     cout << red << bold;
                     cout << "👑 Échec et mat pour les " << (!isWhitePlaying ? "blancs" : "noirs")<< endl;
                     cout << reset;

@@ -2,6 +2,10 @@
 
 using namespace std;
 
+// -------------------------------------
+//                COLORS
+// -------------------------------------
+
 #define white "\x1B[37m"
 #define bold "\x1b[1m"
 #define reset "\x1b[0m"

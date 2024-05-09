@@ -1,5 +1,8 @@
 #include "pieces.h"
 
+// ------------------------------------------------
+//                 GETTERS & SETTERS
+// ------------------------------------------------
 
 int Square::getLine() const {
     return line;
@@ -32,12 +35,12 @@ string Piece::getPosition() const {
     return position;
 }
 
-void Piece::setPosition(string position) {
-    this->position = position;
-}
-
 bool Piece::getHasMoved() const {
     return hasMoved;
+}
+
+void Piece::setPosition(string position) {
+    this->position = position;
 }
 
 void Piece::setHasMoved() {

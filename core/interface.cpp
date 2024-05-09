@@ -1,5 +1,9 @@
 #include "interface.h"
 
+// -------------------------------------
+//              INTERFACE
+// -------------------------------------
+
 void printBegin() {
     cout << endl;
     cout << bold << white;
