@@ -152,14 +152,14 @@ void Board::showBoard() {
 
 string Board::canonical_position() const {
     string output = "";
-    for (size_t row(1); row<=8; row++){
-            for (char col('a');col<='h';col++) {
-                if (board[8-row][col-'a'] != nullptr) {
-                    output += (board[8-row][col-'a']->getColor() == Color::WHITE ? "w" : "b");
-                    output += board[8-row][col-'a']->getPsymb();
-                }
-                output += ",";
+    for (size_t row(0); row <= 7; row++){
+        for (char col('a'); col <= 'h'; col++) {
+            if (board[row][col - 'a'] != nullptr) {
+                output += (board[row][col - 'a']->getColor() == Color::WHITE ? "w" : "b");
+                output += board[row][col - 'a']->getPsymb();
             }
+            output += ",";
+        }
     }
 
     if (whiteWin) {
@@ -220,6 +220,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
         } else {
             // pawn is capturing a piece
             if (
+                endPiece != nullptr &&
                 end.getLine() == start.getLine() + 1 &&
                 abs(end.getColumn() - start.getColumn()) == 1 &&
                 endPiece->getColor() != piece->getColor()
@@ -256,6 +257,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
         } else {
             // pawn is capturing a piece
             if (
+                endPiece != nullptr &&
                 end.getLine() == start.getLine() - 1 &&
                 abs(end.getColumn() - start.getColumn()) == 1 &&
                 endPiece->getColor() != piece->getColor()
@@ -722,7 +724,9 @@ bool Board::validMove(string input, bool isWhitePlaying) {
     // we save the current state of squares, try the move, check if the king is in check, and then revert the move
     Piece* startPiece = board[start.getLine()][start.getColumn()];
     Piece* endPiece = board[end.getLine()][end.getColumn()];
+
     board[end.getLine()][end.getColumn()] = board[start.getLine()][start.getColumn()];
+    board[end.getLine()][end.getColumn()]->setPosition(end.toString());
     board[start.getLine()][start.getColumn()] = nullptr;
 
     if (checkCheck(isWhitePlaying)) {
@@ -731,6 +735,7 @@ bool Board::validMove(string input, bool isWhitePlaying) {
         cout << reset;
         board[start.getLine()][start.getColumn()] = startPiece;
         board[end.getLine()][end.getColumn()] = endPiece;
+        board[start.getLine()][start.getColumn()]->setPosition(start.toString());
         return false;
     }
 

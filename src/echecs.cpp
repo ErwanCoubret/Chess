@@ -1,7 +1,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include "core/board.h"
+#include "../core/board.h"
 
 using namespace std;
 
