@@ -32,6 +32,7 @@ private:
     bool whiteWin = false;
     bool blackWin = false;
     bool possibleEnPassant = false;
+    string invelidMoveReason = "";
     string enPassantSquare = "";
 public:
     Board() :
@@ -64,7 +65,7 @@ public:
     bool checkPieceMove(Piece* piece, Square start, Square end);
 
     // ------------------------------------------------
-    //               CHECK & CHECKMATE
+    //           CHECK, CHECKMATE & STALEMATE
     // ------------------------------------------------
 
     // find king position
@@ -75,6 +76,9 @@ public:
 
     // check if the king is in checkmate
     bool isCheckmate(bool isWhitePlaying);
+
+    // check if the game is in stalemate
+    bool isStalemate(bool isWhitePlaying);
 
     // ------------------------------------------------
     //             GAME INTERACTIONS

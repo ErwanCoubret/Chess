@@ -661,6 +661,7 @@ bool Board::isCheckmate(bool isWhitePlaying) {
                             if (!isCheck(isWhitePlaying)) {
                                 board[i][j] = board[k][l];
                                 board[k][l] = endPiece;
+                                board[i][j]->setPosition(startPosition);
                                 if (endPiece != nullptr) {
                                     board[k][l]->setPosition(endPiece->getPosition());
                                 }
@@ -670,6 +671,7 @@ bool Board::isCheckmate(bool isWhitePlaying) {
 
                             board[i][j] = board[k][l];
                             board[k][l] = endPiece;
+                            board[i][j]->setPosition(startPosition);
                             if (endPiece != nullptr) {
                                 board[k][l]->setPosition(endPiece->getPosition());
                             }
@@ -681,6 +683,10 @@ bool Board::isCheckmate(bool isWhitePlaying) {
     }
 
     return true;
+}
+
+bool Board::isStalemate(bool isWhitePlaying) {
+    return !isCheck(isWhitePlaying) && isCheckmate(isWhitePlaying);
 }
 
 // ------------------------------------------------
@@ -821,33 +827,25 @@ bool Board::validMove(string input, bool isWhitePlaying) {
 
     // check if there is a piece at the initial position
     if (piece == nullptr) {
-        cout << red << bold;
-        cout << "🚫 Il n'y a pas de pièce à cet endroit." << endl;
-        cout << reset;
+        invelidMoveReason = "Il n'y a pas de pièce à cet endroit.";
         return false;
     }
 
     // check if the piece is the right color
     if ((isWhitePlaying && piece->getColor() == Color::BLACK) || (!isWhitePlaying && piece->getColor() == Color::WHITE)) {
-        cout << red << bold;
-        cout << "🚫 Vous ne pouvez pas jouer cette pièce." << endl;
-        cout << reset;
+        invelidMoveReason = "Vous ne pouvez pas jouer cette pièce.";
         return false;
     }
 
     // check if the end is the start
     if (start.toString() == end.toString()) {
-        cout << red << bold;
-        cout << "🚫 Vous devez déplacer la pièce." << endl;
-        cout << reset;
+        invelidMoveReason = "Vous devez déplacer la pièce.";
         return false;
     }
 
     // check if the Piece can move to the end position
     if (!checkPieceMove(piece, start, end)) {
-        cout << red << bold;
-        cout << "🚫 Ce mouvement n'est pas valide." << endl;
-        cout << reset;
+        invelidMoveReason = "Ce mouvement n'est pas valide.";
         return false;
     }
 
@@ -861,9 +859,9 @@ bool Board::validMove(string input, bool isWhitePlaying) {
     board[start.getLine()][start.getColumn()] = nullptr;
 
     if (isCheck(isWhitePlaying)) {
-        cout << red << bold;
-        cout << "🚫 Le roi " << (isWhitePlaying ? "blanc" : "noir") << " est en échec." << endl;
-        cout << reset;
+        invelidMoveReason = "Le roi ";
+        invelidMoveReason += isWhitePlaying ? "blanc" : "noir";
+        invelidMoveReason += " est en échec.";
         board[start.getLine()][start.getColumn()] = startPiece;
         board[end.getLine()][end.getColumn()] = endPiece;
         board[start.getLine()][start.getColumn()]->setPosition(start.toString());
@@ -976,6 +974,13 @@ bool Board::validQueenSideCastling(bool isWhitePlaying) {
     Piece* king = board[kingSquare.getLine()][kingSquare.getColumn()];
     Piece* rook = board[rookSquare.getLine()][rookSquare.getColumn()];
 
+    if (rook == nullptr) {
+        cout << red << bold;
+        cout << "🚫 La tour n'est pas en position." << endl;
+        cout << reset;
+        return false;
+    }
+
     // check if the king and the rook haven't moved
     if (king->getHasMoved() || rook->getHasMoved()) {
         cout << red << bold;
@@ -1083,10 +1088,15 @@ void Board::startGame() {
             if (correctMovementPattern(input)) {
                 // save the possible en passant before valid move modifies it
                 bool savePossibleEnPassant = possibleEnPassant;
+                invelidMoveReason = "";
 
-                if (!validMove(input, isWhitePlaying))
+                if (!validMove(input, isWhitePlaying)) {
+                    cout << red << bold;
+                    cout << "🚫 " << invelidMoveReason << endl;
+                    cout << reset;
                     continue;
-
+                }
+                    
                 // move the piece
                 Square start(&input[0]);
                 Square end(&input[2]);
@@ -1097,10 +1107,15 @@ void Board::startGame() {
 
                 // Promotion
                 if (board[end.getLine()][end.getColumn()]->getPsymb() == 'P' && end.getLine() == (isWhitePlaying ? 7 : 0)) {
-                    cout << "Promotion de pion: ";
-                    cout << "Choisissez la pièce de promotion (Q, R, B, N): ";
+                    cout << "♟️ Promotion de pion: ";
+                    cout << "Choisissez la pièce de promotion (Queen(Q), Rook(R), Bishop(B), Knight(N)): ";
                     string promotion;
                     cin >> promotion;
+                    while (promotion != "Q" && promotion != "R" && promotion != "B" && promotion != "N") {
+                        cout << "🚫 Choix invalide, veuillez réessayer: ";
+                        cin >> promotion;
+                    }
+
                     if (promotion == "Q") {
                         board[end.getLine()][end.getColumn()] = new Queen(isWhitePlaying ? Color::WHITE : Color::BLACK, 0, end.toString());
                     } else if (promotion == "R") {
@@ -1153,6 +1168,8 @@ void Board::startGame() {
                 if (!validQueenSideCastling(isWhitePlaying))
                     continue;
                 
+                
+
                 // find the king and the rook positions
                 Square kingSquare(&board[isWhitePlaying ? 0 : 7][4]->getPosition()[0]);
                 Square rookSquare(&board[isWhitePlaying ? 0 : 7][0]->getPosition()[0]);
@@ -1207,6 +1224,15 @@ void Board::startGame() {
                     cout << "⚔️ Ce mouvement met le roi " << (!isWhitePlaying ? "blanc" : "noir") << " en échec." << endl;
                     cout << reset;
                 }
+            }
+
+            // check if the other player is in stalemate
+            if (isStalemate(!isWhitePlaying)) {
+                cout << blue << bold;
+                cout << "🤝 Match nul." << endl;
+                cout << reset;
+
+                isPlaying = false;
             }
         
             isWhitePlaying = !isWhitePlaying;
