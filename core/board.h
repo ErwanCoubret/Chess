@@ -237,6 +237,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
                 endPiece == nullptr &&
                 end.getLine() == start.getLine() + 1 &&
                 abs(end.getColumn() - start.getColumn()) == 1 &&
+                board[start.getLine()][end.getColumn()] != nullptr &&
                 board[start.getLine()][end.getColumn()]->getPsymb() == 'P' &&
                 board[start.getLine()][end.getColumn()]->getColor() != piece->getColor()
             ) {
@@ -286,6 +287,7 @@ bool Board::checkMove(Piece* piece, Square start, Square end) {
                 endPiece == nullptr &&
                 end.getLine() == start.getLine() - 1 &&
                 abs(end.getColumn() - start.getColumn()) == 1 &&
+                board[start.getLine()][end.getColumn()] != nullptr &&
                 board[start.getLine()][end.getColumn()]->getPsymb() == 'P' &&
                 board[start.getLine()][end.getColumn()]->getColor() != piece->getColor()
             ) {
