@@ -1031,7 +1031,6 @@ void Board::startGame() {
             if (correctMovementPattern(input)) {
                 // save the possible en passant before valid move modifies it
                 bool savePossibleEnPassant = possibleEnPassant;
-                cout << savePossibleEnPassant << endl;
 
                 if (!validMove(input, isWhitePlaying))
                     continue;
