@@ -1,24 +1,31 @@
-# Chess
+# ♟️👑 Chess Game
+
+## Description
+
+This is a simple chess game written in C++ for a Engineering course at Télécom Physique Strasbourg.
+
+Made by Erwan Coubret
 
 ## Commands
 
+### Build & Run
 ```
-clear && g++ chess.cpp -o chess -g -Werror -Wextra -Wall && ./chess
-```
-
-```
-clear && g++ chess.cpp -o chess -g -Werror -Wextra -Wall && cat berger.txt | ./chess
+make run
 ```
 
-```	
-g++ src/chess.cpp -o src/echecs -g -Werror -Wextra -Wall
+### Level tests
+
+Individual tests (number from 1 to 4 for the different levels)
+```
+make test_<number>
 ```
 
-```	
-g++ src/chess.cpp -o src/echecs -g -Werror -Wextra -Wall 
+All tests
+```
+make tests
 ```
 
-Tests
-```	
-g++ src/chess.cpp -o src/echecs -g -Werror -Wextra -Wall && cd ./test && ./test-level.sh 1 && cd ..
+### Clean
+```
+make clean
 ```
