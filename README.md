@@ -37,7 +37,7 @@ make test_<number>
 make tests
 ```
 
-**Clean**
+### 🧹 Clean
 ```
 make clean
 ```

@@ -575,7 +575,6 @@ bool Board::isCheck(bool isWhitePlaying) {
             }
         }
     }
-
     return false;
 }
 
