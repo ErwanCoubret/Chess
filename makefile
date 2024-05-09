@@ -2,7 +2,7 @@
 CXX = g++
 CXXFLAGS = -g -Werror -Wextra -Wall
 SRC_DIR = src
-TEST_DIR = test
+TEST_DIR = tests
 CORE_DIR = core
 EXECUTABLE = echecs
 EXECUTABLE_SRC = $(SRC_DIR)/$(EXECUTABLE)

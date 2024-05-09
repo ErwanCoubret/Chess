@@ -59,7 +59,6 @@ e5d4
 e2d4
 b5d4
 d1h5
-# following move of the king is ilegal, put it at chess
 g8f7
 h7h6
 c3d4

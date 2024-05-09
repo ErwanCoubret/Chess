@@ -42,7 +42,6 @@ bool Board::checkPawnMove(Piece* pawn, Piece* endPiece, Square start, Square end
                 endPiece == nullptr &&
                 board[end.getLine() - 1][end.getColumn()] == nullptr
             ) {
-                cout << "here" << endl;
                 possibleEnPassant = true;
                 return true;
             }
@@ -93,7 +92,6 @@ bool Board::checkPawnMove(Piece* pawn, Piece* endPiece, Square start, Square end
             endPiece == nullptr &&
             board[end.getLine() + 1][end.getColumn()] == nullptr
         ) {
-            cout << "here" << endl;
             possibleEnPassant = true;
             return true;
         }
