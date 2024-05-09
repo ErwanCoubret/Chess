@@ -16,20 +16,11 @@ public:
         line(move[1] - '1')
     {}
 
-    int getLine() const {
-        return line;
-    }
+    int getLine() const;
 
-    int getColumn() const {
-        return column;
-    }
+    int getColumn() const;
 
-    string toString() const {
-        string str = "";
-        str += column + 'a';
-        str += line + '1';
-        return str;
-    }
+    string toString() const;
 };
 
 class Piece {
@@ -49,33 +40,19 @@ public:
         position(position)
     {}
 
-    string getIcon() const {
-        return name;
-    }
+    string getIcon() const;
 
-    char getPsymb() const {
-        return psymb;
-    }
+    char getPsymb() const;
 
-    Color getColor() const {
-        return color;
-    }
+    Color getColor() const;
 
-    string getPosition() const {
-        return position;
-    }
+    string getPosition() const;
 
-    void setPosition(string position) {
-        this->position = position;
-    }
+    void setPosition(string position);
 
-    bool getHasMoved() const {
-        return hasMoved;
-    }
+    bool getHasMoved() const;
 
-    void setHasMoved() {
-        this->hasMoved = true;
-    }
+    void setHasMoved();
 };
 
 class Pawn : public Piece {

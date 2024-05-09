@@ -3,6 +3,7 @@ CXX = g++
 CXXFLAGS = -g -Werror -Wextra -Wall
 SRC_DIR = src
 TEST_DIR = test
+CORE_DIR = core
 EXECUTABLE = echecs
 EXECUTABLE_SRC = $(SRC_DIR)/$(EXECUTABLE)
 EXECUTABLE_TEST = $(EXECUTABLE_SRC)
@@ -16,7 +17,7 @@ all: clean compile run
 # Compilation
 compile:
 	clear
-	$(CXX) $(CXXFLAGS) $(SRC_DIR)/echecs.cpp -o $(EXECUTABLE_SRC)
+	$(CXX) $(CXXFLAGS) $(SRC_DIR)/echecs.cpp -o $(EXECUTABLE_SRC) $(CORE_DIR)/*.cpp
 
 # Exécution
 run: compile
