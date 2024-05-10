@@ -108,6 +108,32 @@ public:
     // check if the queenside castling move is valid
     bool validQueenSideCastling(bool isWhitePlaying);
 
+    // change the player
+    void changePlayer();
+
+    // resign the game
+    void resignGame();
+
+    // draw the game
+    void drawGame();
+
+    // end the game
+    void endGame();
+
+    // process normal move
+    bool processNormalMove(string input);
+
+    // process kingside castling move
+    bool processKingsideCastlingMove();
+
+    // process queenside castling move
+    bool processQueensideCastlingMove();
+
+    // handle the move proposed
+    // return true if the move is valid
+    // false otherwise
+    bool processMove(string input);
+
     // Start the game
     void game();
 

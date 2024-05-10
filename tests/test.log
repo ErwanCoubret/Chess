@@ -1305,7 +1305,10 @@
 ✅ Mouvement h5h6 effectué.
 [0m[31m[1m👑 Échec et mat pour les noirs
 [0m
-🎉 [37m[1mLes blancs[0m remportent la partie !
+[37m[1m🏁 Fin de la partie.
+
+🎉 Les blancs ont gagné.
+
 [1m[37m
 
 		┌───────────────────┐
@@ -1496,7 +1499,10 @@
 ✅ Mouvement h5f7 effectué.
 [0m[31m[1m👑 Échec et mat pour les noirs
 [0m
-🎉 [37m[1mLes blancs[0m remportent la partie !
+[37m[1m🏁 Fin de la partie.
+
+🎉 Les blancs ont gagné.
+
 [1m[37m
 
 		┌───────────────────┐
@@ -1915,7 +1921,10 @@ wR,wN,wB,,wK,,wN,wR,wP,wP,wP,wP,,wP,wP,wP,,,,,,,,,,,wB,,wP,,,,,,bB,,bP,,,,,,bN,,
 ✅ Mouvement f5f7 effectué.
 [0m[31m[1m👑 Échec et mat pour les noirs
 [0m
-🎉 [37m[1mLes blancs[0m remportent la partie !
+[37m[1m🏁 Fin de la partie.
+
+🎉 Les blancs ont gagné.
+
 [1m[37m
 
 		┌───────────────────┐
@@ -2559,7 +2568,10 @@ wR,wN,wB,,wK,,wN,wR,wP,wP,wP,wP,,wP,wP,wP,,,,,,,,,,,,,wP,,,,,,,,bP,,,,,,,,,,wB,,
 ✅ Mouvement f6f7 effectué.
 [0m[31m[1m👑 Échec et mat pour les noirs
 [0m
-🎉 [37m[1mLes blancs[0m remportent la partie !
+[37m[1m🏁 Fin de la partie.
+
+🎉 Les blancs ont gagné.
+
 [1m[37m
 
 		┌───────────────────┐
@@ -6001,7 +6013,10 @@ wR,,,,wK,,wN,wR,wP,wP,wP,,,wP,wP,wP,,,,,,,,,,,wB,,wP,,,,,,bP,,,,,,bP,,bN,,,,bP,,
 ✅ Mouvement e7d7 effectué.
 [0m[34m[1m💤 Pat.
 [0m
-🤝 La partie se termine sur un match nul.
+[37m[1m🏁 Fin de la partie.
+
+🤝 Match nul.
+
 [1m[37m
 
 		┌───────────────────┐

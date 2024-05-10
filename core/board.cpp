@@ -1072,226 +1072,272 @@ bool Board::validQueenSideCastling(bool isWhitePlaying) {
     return true;
 }
 
+void Board::resignGame() {
+    cout << endl;
+    cout << blue;
+    cout << "Abandon de la partie par les ";
+    cout << bold << (isWhitePlaying ? "blancs" : "noirs") << ".";
+    cout << endl;
+
+    isPlaying = false;
+    if (isWhitePlaying) {
+        blackWin = true;
+    } else {
+        whiteWin = true;
+    }
+}
+
+void Board::drawGame() {
+    isPlaying = false;
+}
+
+void Board::endGame() {
+    cout << endl;
+    cout << white << bold;
+    cout << "🏁 Fin de la partie." << endl;
+    cout << endl;
+
+    if (whiteWin) {
+        cout << "🎉 Les blancs ont gagné." << endl;
+    } else if (blackWin) {
+        cout << "🎉 Les noirs ont gagné." << endl;
+    } else {
+        cout << "🤝 Match nul." << endl;
+    }
+
+    cout << endl;
+
+}
+
+void Board::changePlayer() {
+    isWhitePlaying = !isWhitePlaying;
+}
+
+bool Board::processNormalMove(string input) {
+    // save the possible en passant before valid move modifies it
+    bool savePossibleEnPassant = possibleEnPassant;
+    invelidMoveReason = "";
+
+    // verify if the move is valid
+    if (!validMove(input, isWhitePlaying)) {
+        cout << red << bold;
+        cout << "🚫 " << invelidMoveReason << endl;
+        cout << reset;
+        return false;
+    }
+    
+    // move the piece
+    Square start(&input[0]);
+    Square end(&input[2]);
+
+    if (board[end.getLine()][end.getColumn()] != nullptr) {
+        nbMovesWithoutTaking = 0;
+    } else {
+        nbMovesWithoutTaking += 1;
+    }
+
+    board[end.getLine()][end.getColumn()] = board[start.getLine()][start.getColumn()];
+    board[start.getLine()][start.getColumn()] = nullptr;
+    board[end.getLine()][end.getColumn()]->setPosition(end.toString());
+    board[end.getLine()][end.getColumn()]->setHasMoved();
+
+    // Promotion
+    if (board[end.getLine()][end.getColumn()]->getPsymb() == 'P' && end.getLine() == (isWhitePlaying ? 7 : 0)) {
+        cout << "♟️ Promotion de pion: ";
+        cout << "Choisissez la pièce de promotion (Queen(Q), Rook(R), Bishop(B), Knight(N)): ";
+        string promotion;
+        cin >> promotion;
+        while (promotion != "Q" && promotion != "R" && promotion != "B" && promotion != "N") {
+            cout << "🚫 Choix invalide, veuillez réessayer: ";
+            cin >> promotion;
+        }
+
+        if (promotion == "Q") {
+            board[end.getLine()][end.getColumn()] = new Queen(isWhitePlaying ? Color::WHITE : Color::BLACK, 0, end.toString());
+        } else if (promotion == "R") {
+            board[end.getLine()][end.getColumn()] = new Rook(isWhitePlaying ? Color::WHITE : Color::BLACK, 0, end.toString());
+        } else if (promotion == "B") {
+            board[end.getLine()][end.getColumn()] = new Bishop(isWhitePlaying ? Color::WHITE : Color::BLACK, 0, end.toString());
+        } else if (promotion == "N") {
+            board[end.getLine()][end.getColumn()] = new Knight(isWhitePlaying ? Color::WHITE : Color::BLACK, 0, end.toString());
+        }
+    }
+
+    // handle en passant
+    if (savePossibleEnPassant) {
+        if (
+            board[end.getLine()][end.getColumn()]->getPsymb() == 'P' &&
+            abs(end.getLine() - start.getLine()) == 1 &&
+            abs(end.getColumn() - start.getColumn()) == 1
+        ) {
+            board[start.getLine()][end.getColumn()] = nullptr;
+        }
+
+        possibleEnPassant = false;
+    }
+
+    return true;
+}
+
+bool Board::processKingsideCastlingMove() {
+    if (!validKingSideCastling(isWhitePlaying))
+        return false;
+        
+    // find the king and the rook positions
+    Square kingSquare(&board[isWhitePlaying ? 0 : 7][4]->getPosition()[0]);
+    Square rookSquare(&board[isWhitePlaying ? 0 : 7][7]->getPosition()[0]);
+
+    // get the king and the rook
+    Piece* king = board[kingSquare.getLine()][kingSquare.getColumn()];
+    Piece* rook = board[rookSquare.getLine()][rookSquare.getColumn()];
+
+    // move the king and the rook
+    board[rookSquare.getLine()][rookSquare.getColumn() - 1] = king;
+    board[rookSquare.getLine()][rookSquare.getColumn() - 2] = rook;
+    board[kingSquare.getLine()][kingSquare.getColumn()] = nullptr;
+    board[rookSquare.getLine()][rookSquare.getColumn()] = nullptr;
+
+    // update the positions
+    board[rookSquare.getLine()][rookSquare.getColumn() - 1]->setPosition((isWhitePlaying? "g1" : "g8"));
+    board[rookSquare.getLine()][rookSquare.getColumn() - 2]->setPosition((isWhitePlaying? "f1" : "f8"));
+    board[rookSquare.getLine()][rookSquare.getColumn() - 1]->setHasMoved();
+    board[rookSquare.getLine()][rookSquare.getColumn() - 2]->setHasMoved();
+
+    nbMovesWithoutTaking += 1;
+
+    return true;
+}
+
+bool Board::processQueensideCastlingMove() {
+    if (!validQueenSideCastling(isWhitePlaying))
+        return false;
+
+    // find the king and the rook positions
+    Square kingSquare(&board[isWhitePlaying ? 0 : 7][4]->getPosition()[0]);
+    Square rookSquare(&board[isWhitePlaying ? 0 : 7][0]->getPosition()[0]);
+
+    // get the king and the rook
+    Piece* king = board[kingSquare.getLine()][kingSquare.getColumn()];
+    Piece* rook = board[rookSquare.getLine()][rookSquare.getColumn()];
+
+    // move the king and the rook
+    board[kingSquare.getLine()][kingSquare.getColumn() - 2] = king;
+    board[kingSquare.getLine()][kingSquare.getColumn() - 1] = rook;
+    board[kingSquare.getLine()][kingSquare.getColumn()] = nullptr;
+    board[rookSquare.getLine()][rookSquare.getColumn()] = nullptr;
+
+    // update the positions
+    board[kingSquare.getLine()][kingSquare.getColumn() - 2]->setPosition((isWhitePlaying? "c1" : "c8"));
+    board[kingSquare.getLine()][kingSquare.getColumn() - 1]->setPosition((isWhitePlaying? "d1" : "d8"));
+    board[kingSquare.getLine()][kingSquare.getColumn() - 2]->setHasMoved();
+    board[kingSquare.getLine()][kingSquare.getColumn() - 1]->setHasMoved();
+
+    nbMovesWithoutTaking += 1;
+
+    return true;
+}
+
+bool Board::processMove(string input) {
+    if (correctMovementPattern(input)) {
+        if (!processNormalMove(input)){
+            // invalid move
+            return false;
+        }
+    } else if (correctKingsideCastlingPattern(input)) {
+        if (!processKingsideCastlingMove()) {
+            // invalid move
+            return false;
+        }
+    } else if (correctQueensideCastlingPattern(input)) {
+        if (!processQueensideCastlingMove()) {
+            // invalid move
+            return false;
+        }
+    }
+    else
+    {
+        cout << red << bold;
+        cout << "🚫 Commande invalide, veuillez réessayer (tapez "; 
+        cout << orange << "/help" << red;
+        cout << " pour voir les coups valides)." << endl;
+        cout << reset;
+        return false;
+    }
+
+    // IF THE MOVE IS DONE 
+
+    cout << "✅ Mouvement " << input << " effectué." << endl;
+    cout << reset;
+
+    // check if the other player is in check
+    if (isCheck(!isWhitePlaying)) {
+        if (isCheckmate(!isWhitePlaying)) {
+            cout << red << bold;
+            cout << "👑 Échec et mat pour les " << (!isWhitePlaying ? "blancs" : "noirs")<< endl;
+            cout << reset;
+
+            isPlaying = false;
+            if (isWhitePlaying) {
+                whiteWin = true;
+            } else {
+                blackWin = true;
+            }
+
+            return false;
+
+        } else {
+            cout << red << bold;
+            cout << "⚔️ Ce mouvement met le roi " << (!isWhitePlaying ? "blanc" : "noir") << " en échec." << endl;
+            cout << reset;
+        }
+    }
+
+    // check if the other player is in stalemate
+    if (isStalemate(!isWhitePlaying)) {
+        cout << blue << bold;
+        cout << "💤 Pat." << endl;
+        cout << reset;
+
+        isPlaying = false;
+    }
+
+    // save the last inputs in the table of the 5 last moves
+    // in order to determine if this is a Stalemate by repetition
+    if (isWhitePlaying) {
+        for (int i = 4; i > 0; i--) {
+            lastMovesWhite[i] = lastMovesWhite[i - 1];
+        }
+        lastMovesWhite[0] = input;
+    } else {
+        for (int i = 4; i > 0; i--) {
+            lastMovesBlack[i] = lastMovesBlack[i - 1];
+        }
+        lastMovesBlack[0] = input;
+    }
+
+    return true;
+}
+
 void Board::game() {
     // ----- Game loop -----
     while (isPlaying) {
         showBoard();
         string input = getInput(isWhitePlaying);
 
-        if (input == "/quit")
-        {
+        if (input == "/quit") {
             return;
-        } 
-        else if (input == "/help")
-        {
+        } else if (input == "/help") {
             printHelp();
-        } 
-        else if (input == "/resign")
-        {
-            cout << endl;
-            cout << blue;
-            cout << "Abandon de la partie par les ";
-            cout << bold << (isWhitePlaying ? "blancs" : "noirs") << ".";
-            cout << endl;
-
-            isPlaying = false;
-            if (isWhitePlaying) {
-                blackWin = true;
-            } else {
-                whiteWin = true;
-            }
-        } 
-        else if (input == "/draw")
-        {
-            isPlaying = false;
-            return;
+        }  else if (input == "/resign") {
+            resignGame();
+        }  else if (input == "/draw") {
+            drawGame();
         } else {
-            if (correctMovementPattern(input)) {
-                // save the possible en passant before valid move modifies it
-                bool savePossibleEnPassant = possibleEnPassant;
-                invelidMoveReason = "";
-
-                if (!validMove(input, isWhitePlaying)) {
-                    cout << red << bold;
-                    cout << "🚫 " << invelidMoveReason << endl;
-                    cout << reset;
-                    continue;
-                }
-                
-                // move the piece
-                Square start(&input[0]);
-                Square end(&input[2]);
-
-                if (board[end.getLine()][end.getColumn()] != nullptr) {
-                    nbMovesWithoutTaking = 0;
-                } else {
-                    nbMovesWithoutTaking += 1;
-                }
-
-                board[end.getLine()][end.getColumn()] = board[start.getLine()][start.getColumn()];
-                board[start.getLine()][start.getColumn()] = nullptr;
-                board[end.getLine()][end.getColumn()]->setPosition(end.toString());
-                board[end.getLine()][end.getColumn()]->setHasMoved();
-
-                // Promotion
-                if (board[end.getLine()][end.getColumn()]->getPsymb() == 'P' && end.getLine() == (isWhitePlaying ? 7 : 0)) {
-                    cout << "♟️ Promotion de pion: ";
-                    cout << "Choisissez la pièce de promotion (Queen(Q), Rook(R), Bishop(B), Knight(N)): ";
-                    string promotion;
-                    cin >> promotion;
-                    while (promotion != "Q" && promotion != "R" && promotion != "B" && promotion != "N") {
-                        cout << "🚫 Choix invalide, veuillez réessayer: ";
-                        cin >> promotion;
-                    }
-
-                    if (promotion == "Q") {
-                        board[end.getLine()][end.getColumn()] = new Queen(isWhitePlaying ? Color::WHITE : Color::BLACK, 0, end.toString());
-                    } else if (promotion == "R") {
-                        board[end.getLine()][end.getColumn()] = new Rook(isWhitePlaying ? Color::WHITE : Color::BLACK, 0, end.toString());
-                    } else if (promotion == "B") {
-                        board[end.getLine()][end.getColumn()] = new Bishop(isWhitePlaying ? Color::WHITE : Color::BLACK, 0, end.toString());
-                    } else if (promotion == "N") {
-                        board[end.getLine()][end.getColumn()] = new Knight(isWhitePlaying ? Color::WHITE : Color::BLACK, 0, end.toString());
-                    }
-                }
-
-                // handle en passant
-                if (savePossibleEnPassant) {
-                    if (
-                        board[end.getLine()][end.getColumn()]->getPsymb() == 'P' &&
-                        abs(end.getLine() - start.getLine()) == 1 &&
-                        abs(end.getColumn() - start.getColumn()) == 1
-                    ) {
-                        board[start.getLine()][end.getColumn()] = nullptr;
-                    }
-
-                    possibleEnPassant = false;
-                }
-
-            } else if (correctKingsideCastlingPattern(input)) {
-                if (!validKingSideCastling(isWhitePlaying))
-                    continue;
-                
-                // find the king and the rook positions
-                Square kingSquare(&board[isWhitePlaying ? 0 : 7][4]->getPosition()[0]);
-                Square rookSquare(&board[isWhitePlaying ? 0 : 7][7]->getPosition()[0]);
-
-                // get the king and the rook
-                Piece* king = board[kingSquare.getLine()][kingSquare.getColumn()];
-                Piece* rook = board[rookSquare.getLine()][rookSquare.getColumn()];
-
-                // move the king and the rook
-                board[rookSquare.getLine()][rookSquare.getColumn() - 1] = king;
-                board[rookSquare.getLine()][rookSquare.getColumn() - 2] = rook;
-                board[kingSquare.getLine()][kingSquare.getColumn()] = nullptr;
-                board[rookSquare.getLine()][rookSquare.getColumn()] = nullptr;
-
-                // update the positions
-                board[rookSquare.getLine()][rookSquare.getColumn() - 1]->setPosition((isWhitePlaying? "g1" : "g8"));
-                board[rookSquare.getLine()][rookSquare.getColumn() - 2]->setPosition((isWhitePlaying? "f1" : "f8"));
-                board[rookSquare.getLine()][rookSquare.getColumn() - 1]->setHasMoved();
-                board[rookSquare.getLine()][rookSquare.getColumn() - 2]->setHasMoved();
-
-                nbMovesWithoutTaking += 1;
-            } else if (correctQueensideCastlingPattern(input)) {
-                if (!validQueenSideCastling(isWhitePlaying))
-                    continue;
-
-                // find the king and the rook positions
-                Square kingSquare(&board[isWhitePlaying ? 0 : 7][4]->getPosition()[0]);
-                Square rookSquare(&board[isWhitePlaying ? 0 : 7][0]->getPosition()[0]);
-
-                // get the king and the rook
-                Piece* king = board[kingSquare.getLine()][kingSquare.getColumn()];
-                Piece* rook = board[rookSquare.getLine()][rookSquare.getColumn()];
-
-                // move the king and the rook
-                board[kingSquare.getLine()][kingSquare.getColumn() - 2] = king;
-                board[kingSquare.getLine()][kingSquare.getColumn() - 1] = rook;
-                board[kingSquare.getLine()][kingSquare.getColumn()] = nullptr;
-                board[rookSquare.getLine()][rookSquare.getColumn()] = nullptr;
-
-                // update the positions
-                board[kingSquare.getLine()][kingSquare.getColumn() - 2]->setPosition((isWhitePlaying? "c1" : "c8"));
-                board[kingSquare.getLine()][kingSquare.getColumn() - 1]->setPosition((isWhitePlaying? "d1" : "d8"));
-                board[kingSquare.getLine()][kingSquare.getColumn() - 2]->setHasMoved();
-                board[kingSquare.getLine()][kingSquare.getColumn() - 1]->setHasMoved();
-
-                nbMovesWithoutTaking += 1;
-            }
-            else
-            {
-                cout << red << bold;
-                cout << "🚫 Commande invalide, veuillez réessayer (tapez "; 
-                cout << orange << "/help" << red;
-                cout << " pour voir les coups valides)." << endl;
-                cout << reset;
+            if (!processMove(input))
                 continue;
-            }
-
-            cout << "✅ Mouvement " << input << " effectué." << endl;
-            cout << reset;
-
-            // check if the other player is in check
-            if (isCheck(!isWhitePlaying)) {
-                if (isCheckmate(!isWhitePlaying)) {
-                    cout << red << bold;
-                    cout << "👑 Échec et mat pour les " << (!isWhitePlaying ? "blancs" : "noirs")<< endl;
-                    cout << reset;
-
-                    isPlaying = false;
-                    if (isWhitePlaying) {
-                        whiteWin = true;
-                    } else {
-                        blackWin = true;
-                    }
-
-                    continue;
-
-                } else {
-                    cout << red << bold;
-                    cout << "⚔️ Ce mouvement met le roi " << (!isWhitePlaying ? "blanc" : "noir") << " en échec." << endl;
-                    cout << reset;
-                }
-            }
-
-            // check if the other player is in stalemate
-            if (isStalemate(!isWhitePlaying)) {
-                cout << blue << bold;
-                cout << "💤 Pat." << endl;
-                cout << reset;
-
-                isPlaying = false;
-            }
-
-            // save the last input in the table of the 5 last moves
-            if (isWhitePlaying) {
-                for (int i = 4; i > 0; i--) {
-                    lastMovesWhite[i] = lastMovesWhite[i - 1];
-                }
-                lastMovesWhite[0] = input;
-            } else {
-                for (int i = 4; i > 0; i--) {
-                    lastMovesBlack[i] = lastMovesBlack[i - 1];
-                }
-                lastMovesBlack[0] = input;
-            }
-
-            // change the player
-            isWhitePlaying = !isWhitePlaying;
+            changePlayer();
         }
     }
 
-    if (whiteWin || blackWin) {
-        cout << endl;
-        cout << "🎉 ";
-        cout << white << bold;
-        cout << (whiteWin ? "Les blancs" : "Les noirs");
-        cout << reset;
-        cout << " remportent la partie !" << endl;
-    } else {
-        cout << endl;
-        cout << "🤝 La partie se termine sur un match nul." << endl;
-    }
-
+    endGame();
 }
