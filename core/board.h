@@ -31,9 +31,15 @@ private:
     bool checkmate = false;
     bool whiteWin = false;
     bool blackWin = false;
-    bool possibleEnPassant = false;
+
     string invelidMoveReason = "";
+
+    bool possibleEnPassant = false;
     string enPassantSquare = "";
+
+    int nbMovesWithoutTaking = 0;
+    string lastMovesWhite[5] = {"", "", "", "", ""};
+    string lastMovesBlack[5] = {"", "", "", "", ""};
 public:
     Board() :
         board(8, vector<Piece*>(8))
@@ -103,7 +109,7 @@ public:
     bool validQueenSideCastling(bool isWhitePlaying);
 
     // Start the game
-    void startGame();
+    void game();
 
     // Print the board state as string
     string canonical_position() const;

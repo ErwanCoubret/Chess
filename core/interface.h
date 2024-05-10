@@ -12,6 +12,7 @@ using namespace std;
 #define orange "\x1B[33m"
 #define blue "\x1B[34m"
 #define red "\x1B[31m"
+#define green "\x1B[32m"
 
 // -------------------------------------
 //              INTERFACE

@@ -686,7 +686,28 @@ bool Board::isCheckmate(bool isWhitePlaying) {
 }
 
 bool Board::isStalemate(bool isWhitePlaying) {
-    return !isCheck(isWhitePlaying) && isCheckmate(isWhitePlaying);
+
+    // check if this is a triple repetition of the position
+    // for the 2 players
+    bool whiteFlagRepeat = 
+        lastMovesWhite[0] != "" &&
+        lastMovesWhite[0] == lastMovesWhite[2] &&
+        lastMovesWhite[2] == lastMovesWhite[4] &&
+        lastMovesWhite[1] == lastMovesWhite[3]
+    ;
+
+    bool blackFlagRepeat =
+        lastMovesBlack[0] != "" &&
+        lastMovesBlack[0] == lastMovesBlack[2] &&
+        lastMovesBlack[2] == lastMovesBlack[4] &&
+        lastMovesBlack[1] == lastMovesBlack[3]
+    ;
+
+    return
+        ((!isCheck(isWhitePlaying) && isCheckmate(isWhitePlaying)) &&
+        nbMovesWithoutTaking < 50) ||
+        (whiteFlagRepeat && blackFlagRepeat)
+    ;
 }
 
 // ------------------------------------------------
@@ -724,7 +745,7 @@ void Board::initGame() {
             board[i][j] = nullptr;
 
     // ----- Begin the game logic -----
-    startGame();
+    game();
 }
 
 void Board::showBoard() {
@@ -1051,7 +1072,7 @@ bool Board::validQueenSideCastling(bool isWhitePlaying) {
     return true;
 }
 
-void Board::startGame() {
+void Board::game() {
     // ----- Game loop -----
     while (isPlaying) {
         showBoard();
@@ -1096,10 +1117,17 @@ void Board::startGame() {
                     cout << reset;
                     continue;
                 }
-                    
+                
                 // move the piece
                 Square start(&input[0]);
                 Square end(&input[2]);
+
+                if (board[end.getLine()][end.getColumn()] != nullptr) {
+                    nbMovesWithoutTaking = 0;
+                } else {
+                    nbMovesWithoutTaking += 1;
+                }
+
                 board[end.getLine()][end.getColumn()] = board[start.getLine()][start.getColumn()];
                 board[start.getLine()][start.getColumn()] = nullptr;
                 board[end.getLine()][end.getColumn()]->setPosition(end.toString());
@@ -1134,7 +1162,6 @@ void Board::startGame() {
                         abs(end.getLine() - start.getLine()) == 1 &&
                         abs(end.getColumn() - start.getColumn()) == 1
                     ) {
-                        cout << "Prise en passant effectuée." << endl;
                         board[start.getLine()][end.getColumn()] = nullptr;
                     }
 
@@ -1164,11 +1191,11 @@ void Board::startGame() {
                 board[rookSquare.getLine()][rookSquare.getColumn() - 2]->setPosition((isWhitePlaying? "f1" : "f8"));
                 board[rookSquare.getLine()][rookSquare.getColumn() - 1]->setHasMoved();
                 board[rookSquare.getLine()][rookSquare.getColumn() - 2]->setHasMoved();
+
+                nbMovesWithoutTaking += 1;
             } else if (correctQueensideCastlingPattern(input)) {
                 if (!validQueenSideCastling(isWhitePlaying))
                     continue;
-                
-                
 
                 // find the king and the rook positions
                 Square kingSquare(&board[isWhitePlaying ? 0 : 7][4]->getPosition()[0]);
@@ -1189,6 +1216,8 @@ void Board::startGame() {
                 board[kingSquare.getLine()][kingSquare.getColumn() - 1]->setPosition((isWhitePlaying? "d1" : "d8"));
                 board[kingSquare.getLine()][kingSquare.getColumn() - 2]->setHasMoved();
                 board[kingSquare.getLine()][kingSquare.getColumn() - 1]->setHasMoved();
+
+                nbMovesWithoutTaking += 1;
             }
             else
             {
@@ -1229,12 +1258,26 @@ void Board::startGame() {
             // check if the other player is in stalemate
             if (isStalemate(!isWhitePlaying)) {
                 cout << blue << bold;
-                cout << "🤝 Match nul." << endl;
+                cout << "💤 Pat." << endl;
                 cout << reset;
 
                 isPlaying = false;
             }
-        
+
+            // save the last input in the table of the 5 last moves
+            if (isWhitePlaying) {
+                for (int i = 4; i > 0; i--) {
+                    lastMovesWhite[i] = lastMovesWhite[i - 1];
+                }
+                lastMovesWhite[0] = input;
+            } else {
+                for (int i = 4; i > 0; i--) {
+                    lastMovesBlack[i] = lastMovesBlack[i - 1];
+                }
+                lastMovesBlack[0] = input;
+            }
+
+            // change the player
             isWhitePlaying = !isWhitePlaying;
         }
     }
