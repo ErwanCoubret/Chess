@@ -1,3 +1,8 @@
+/**
+ * @file interface.h
+ * @brief Header file for the game interface & colors
+ */
+
 #include <iostream>
 
 using namespace std;
@@ -18,10 +23,17 @@ using namespace std;
 //              INTERFACE
 // -------------------------------------
 
+/**
+ * @brief Print the beginning of the game
+*/
 void printBegin();
 
+/**
+ * @brief Print the help message
+*/
 void printHelp();
 
+/**
+ * @brief Print the quit message
+*/
 void printQuit();
-
-int getInputStart();

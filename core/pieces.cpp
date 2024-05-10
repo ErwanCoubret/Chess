@@ -1,3 +1,8 @@
+/**
+ * @file pieces.cpp
+ * @brief Implementation file for the game pieces
+*/
+
 #include "pieces.h"
 
 // ------------------------------------------------

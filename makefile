@@ -23,6 +23,9 @@ compile:
 run: compile
 	./$(EXECUTABLE_SRC)
 
+doc:
+	doxygen doxyfile
+
 # Compilation et exécution des tests
 test_1: compile
 	cd $(TEST_DIR) && ./test-level.sh 1 && cd ..

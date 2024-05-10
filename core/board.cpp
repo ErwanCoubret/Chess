@@ -1,3 +1,8 @@
+/**
+ * @file board.cpp
+ * @brief Implementation of the chess board functions & game logic
+ */
+
 #include "board.h"
 
 // ------------------------------------------------

@@ -1,3 +1,8 @@
+/**
+ * @file interface.cpp
+ * @brief Implementation file for the game interface
+ */
+
 #include "interface.h"
 
 // -------------------------------------
@@ -18,15 +23,6 @@ void printBegin() {
 
     cout << reset << bold;
 
-    cout << endl;
-
-    cout << "\t🕹️  Pour commencer une partie, tapez" << orange << " \\play" << endl;
-    cout << reset << bold;
-    cout << "\t📜 Pour voir comment jouer au jeu, tapez" << orange << " \\help" << endl;
-    cout << reset << bold;
-    cout << "\t🚪 Pour quitter le jeu, tapez" << orange << " \\quit" << endl;
-
-    cout << endl;
     cout << endl;
 }
 
@@ -72,29 +68,4 @@ void printQuit() {
     cout << reset << bold;
     cout << "\t👋 Merci d'avoir joué, à bientôt !" << endl;
     cout << endl;
-}
-
-int getInputStart() {
-    string input;
-
-    while (true)
-    {
-        cout << white << bold;
-        cout << "🔧 Entrez votre commande: ";
-        cout << orange;
-        cin >> input;
-
-        if (input == "\\quit") {
-            return 0;
-        } else if (input == "\\play") {
-            return 1;
-        } else if (input == "\\help") {
-            printHelp();
-        } else {
-            cout << red;
-            cout << "🚫 Commande invalide, veuillez réessayer." << endl;
-            cout << reset;
-            cout << endl;
-        }
-    }
 }

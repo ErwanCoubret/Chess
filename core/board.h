@@ -1,3 +1,8 @@
+/**
+ * @file board.h
+ * @brief Header file for the game board and its logic
+ */
+
 #include <iostream>
 #include <vector>
 #include <string>
@@ -12,12 +17,31 @@ using namespace std;
 //          PATTERN MATCHING FUNCTIONS
 // ------------------------------------------------
 
+/**
+ * @brief Check if the input is a valid move pattern
+ * @param cmd The input command
+ * @return true if the input is a valid move pattern, false otherwise
+*/
 bool correctMovementPattern(string const & cmd);
 
+/**
+ * @brief Check if the input is a valid kingside castling pattern
+ * @param cmd The input command
+ * @return true if the input is a valid kingside castling pattern, false otherwise
+ * */
 bool correctKingsideCastlingPattern(string const & cmd);
 
+/**
+ * @brief Check if the input is a valid queenside castling pattern
+ * @param cmd The input command
+ * @return true if the input is a valid queenside castling pattern, false otherwise
+ * */
 bool correctQueensideCastlingPattern(string const & cmd);
 
+/**
+ * @class Board
+ * @brief Class representing the chess board and its logic
+ */
 class Board {
 private:
     // ------------------------------------------------
@@ -49,94 +73,200 @@ public:
     //                 MOVE PIECES
     // ------------------------------------------------
 
-    // ---- PAWN LOGIC ----
+    /**
+     * @brief Check if the move is valid for a pawn
+     * @param pawn The pawn to move
+     * @param endPiece The piece at the destination square, eventually nullptr
+     * @param start The start square
+     * @param end The end square
+    */
     bool checkPawnMove(Piece* pawn, Piece* endPiece, Square start, Square end);
 
-    // ---- ROOK LOGIC ----
+    /**
+     * @brief Check if the move is valid for a rook
+     * @param rook The rook to move
+     * @param endPiece The piece at the destination square, eventually nullptr
+     * @param start The start square
+     * @param end The end square
+    */
     bool checkRookMove(Piece* rook, Piece* endPiece, Square start, Square end);
 
-    // ---- KNIGHT LOGIC ----
+    /**
+     * @brief Check if the move is valid for a knight
+     * @param knight The knight to move
+     * @param endPiece The piece at the destination square, eventually nullptr
+     * @param start The start square
+     * @param end The end square
+    */
     bool checkKnightMove(Piece* knight, Piece* endPiece, Square start, Square end);
 
-    // ---- BISHOP LOGIC ----
+    /**
+     * @brief Check if the move is valid for a bishop
+     * @param bishop The bishop to move
+     * @param endPiece The piece at the destination square, eventually nullptr
+     * @param start The start square
+     * @param end The end square
+    */
     bool checkBishopMove(Piece* bishop, Piece* endPiece, Square start, Square end);
 
-    // ---- QUEEN LOGIC ----
+    /**
+     * @brief Check if the move is valid for a queen
+     * @param queen The queen to move
+     * @param endPiece The piece at the destination square, eventually nullptr
+     * @param start The start square
+     * @param end The end square
+    */
     bool checkQueenMove(Piece* queen, Piece* endPiece, Square start, Square end);
 
-    // ---- KING LOGIC ----
+    /**
+     * @brief Check if the move is valid for a king
+     * @param king The king to move
+     * @param endPiece The piece at the destination square, eventually nullptr
+     * @param start The start square
+     * @param end The end square
+    */
     bool checkKingMove(Piece* king, Piece* endPiece, Square start, Square end);
 
-    // check if the move is valid for a specific piece
+    /**
+     * @brief Check if the move is valid for a piece, redirect to the correct function
+     * @param piece The piece to move
+     * @param start The start square
+     * @param end The end square
+     * @return true if the move is valid, false otherwise
+    */
     bool checkPieceMove(Piece* piece, Square start, Square end);
 
     // ------------------------------------------------
     //           CHECK, CHECKMATE & STALEMATE
     // ------------------------------------------------
 
-    // find king position
+    /**
+     * @brief find the position of the king
+     * @param isWhitePlaying true if it is the white player's turn, false otherwise
+     * @return the position of the king
+    */
     string findKingPosition(bool isWhitePlaying);
 
-    // check if the king is in check
+    /**
+     * @brief Check if the king is in check
+     * @param isWhitePlaying true if it is the white player's turn, false otherwise
+     * @return true if the king is in check, false otherwise
+    */
     bool isCheck(bool isWhitePlaying);
 
-    // check if the king is in checkmate
+    /**
+     * @brief Check if the king is in checkmate
+     * @param isWhitePlaying true if it is the white player's turn, false otherwise
+     * @return true if the king is in checkmate, false otherwise
+    */
     bool isCheckmate(bool isWhitePlaying);
 
-    // check if the game is in stalemate
+    /**
+     * @brief Check if the game is in stalemate
+     * @param isWhitePlaying true if it is the white player's turn, false otherwise
+     * @return true if the game is in stalemate, false otherwise
+    */
     bool isStalemate(bool isWhitePlaying);
 
     // ------------------------------------------------
     //             GAME INTERACTIONS
     // ------------------------------------------------
 
-    // Board initialization & launch the game
+    /**
+     * @brief Initialize the game, set the board and the pieces and begin the game loop
+    */
     void initGame();
 
-    // Display the Chess board
+   /**
+    * @brief Print the current 
+   */
     void showBoard();
 
-    // Get the input from the player (move, quit, help, resign, draw)
+    /**
+     * @brief Get the input from the player (move, quit, help, resign, draw)
+     * @param isWhitePlaying true if it is the white player's turn, false otherwise
+     * @return the input from the player
+    */
     string getInput(bool isWhitePlaying);
 
-    // check if the move is valid
+    /**
+     * @brief Check if the move is valid
+     * @param input The input move
+     * @param isWhitePlaying true if it is the white player's turn, false otherwise
+     * @return true if the move is valid, false otherwise
+    */
     bool validMove(string input, bool isWhitePlaying);
 
-    // check if the kingside castling move is valid
+    /**
+     * @brief Check if the kingside castling move is valid
+     * @param isWhitePlaying true if it is the white player's turn, false otherwise
+     * @return true if the kingside castling move is valid, false otherwise
+    */
     bool validKingSideCastling(bool isWhitePlaying);
 
-    // check if the queenside castling move is valid
+    /**
+     * @brief Check if the queenside castling move is valid
+     * @param isWhitePlaying true if it is the white player's turn, false otherwise
+     * @return true if the queenside castling move is valid, false otherwise
+    */
     bool validQueenSideCastling(bool isWhitePlaying);
 
-    // change the player
+    /**
+     * @brief Switch the player's turn
+    */
     void changePlayer();
 
-    // resign the game
+    /**
+     * @brief Resign the game
+    */
     void resignGame();
 
-    // draw the game
+    /**
+     * @brief Draw the game
+    */
     void drawGame();
 
-    // end the game
+    /**
+     * @brief End the game and print information about the game
+    */
     void endGame();
 
-    // process normal move
+    /**
+     * @brief Check if the input is a valid move pattern
+     * @param cmd The input command
+     * @return true if the input is a valid move pattern, false otherwise
+    */
     bool processNormalMove(string input);
 
-    // process kingside castling move
+    /**
+     * @brief Check if the input is a valid kingside castling pattern
+     * @param cmd The input command
+     * @return true if the input is a valid kingside castling pattern, false otherwise
+    */
     bool processKingsideCastlingMove();
 
-    // process queenside castling move
+    /**
+     * @brief Check if the input is a valid queenside castling pattern
+     * @param cmd The input command
+     * @return true if the input is a valid queenside castling pattern, false otherwise
+    */
     bool processQueensideCastlingMove();
 
-    // handle the move proposed
-    // return true if the move is valid
-    // false otherwise
+    /**
+     * @brief handle the move input
+     * @param input The input move
+     * @return true if the move is valid, false otherwise
+    */
     bool processMove(string input);
 
-    // Start the game
+    /**
+     * @brief start the game loop
+    */
     void game();
 
-    // Print the board state as string
+    /**
+     * @brief Get the canonical position of the board
+     * @return the canonical position of the board
+    */
     string canonical_position() const;
 };
